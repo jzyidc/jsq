@@ -11,6 +11,20 @@
           <h2>欢迎回来，{{ getUserDisplayName(userStore.userInfo) }}！</h2>
           <p class="welcome-text">{{ userStore.userInfo.agent || '很高兴再次见到您' }}</p>
           <div class="user-details">
+            <el-tag v-if="userStore.userInfo.realName" type="primary" size="small">
+              <el-icon><User /></el-icon>
+              {{ userStore.userInfo.realName }}
+            </el-tag>
+            <el-tag 
+               v-if="userStore.userInfo.authentication !== undefined" 
+               :type="userStore.userInfo.authentication ? 'success' : 'warning'" 
+               size="small"
+               :class="{ 'clickable-tag': !userStore.userInfo.authentication }"
+               @click="handleAuthenticationClick"
+             >
+               <el-icon><Star /></el-icon>
+               {{ userStore.userInfo.authentication ? '已实名' : '未实名' }}
+             </el-tag>
             <el-tag v-if="userStore.userInfo.phone" type="info" size="small">
               <el-icon><Phone /></el-icon>
               {{ userStore.userInfo.phone }}
@@ -79,6 +93,28 @@
               <div class="stat-content">
                 <div class="stat-number">{{ userStore.userInfo.nodeInfo?.expire_end_num || 0 }}</div>
                 <div class="stat-label">已过期节点数</div>
+              </div>
+            </div>
+          </el-card>
+        </el-col>
+        <el-col :xs="12" :sm="12" :md="6" :lg="6" :xl="6">
+          <el-card class="stat-card">
+            <div class="stat-item">
+              <el-icon class="stat-icon" color="#67C23A"><Money /></el-icon>
+              <div class="stat-content">
+                <div class="stat-number">¥{{ formatBalance(userStore.userInfo.total_pay_amount) }}</div>
+                <div class="stat-label">总充值金额</div>
+              </div>
+            </div>
+          </el-card>
+        </el-col>
+        <el-col :xs="12" :sm="12" :md="6" :lg="6" :xl="6">
+          <el-card class="stat-card">
+            <div class="stat-item">
+              <el-icon class="stat-icon" color="#E6A23C"><Star /></el-icon>
+              <div class="stat-content">
+                <div class="stat-number">¥{{ formatBalance(userStore.userInfo.total_commission_amount) }}</div>
+                <div class="stat-label">总佣金金额</div>
               </div>
             </div>
           </el-card>
@@ -399,6 +435,14 @@ const closeNotice = () => {
   userStore.resetFirstLogin()
 }
 
+// 处理实名认证点击
+const handleAuthenticationClick = () => {
+  // 如果未实名，跳转到实名认证页面
+  if (!userStore.userInfo.authentication) {
+    router.push('/user/profile')
+  }
+}
+
 // 监听首次登录状态
 watch(() => userStore.isFirstLogin, (newVal) => {
   if (newVal) {
@@ -460,6 +504,16 @@ onMounted(() => {
           
           .el-icon {
             margin-right: 4px;
+          }
+          
+          &.clickable-tag {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            
+            &:hover {
+              background: rgba(255, 255, 255, 0.3);
+              transform: translateY(-1px);
+            }
           }
         }
       }
