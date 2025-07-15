@@ -1,7 +1,17 @@
 <template>
   <div class="user-layout">
+    <!-- 移动端遮罩层 -->
+    <div 
+      v-if="isMobile && !isCollapse" 
+      class="mobile-overlay" 
+      @click="toggleCollapse"
+    ></div>
+    
     <!-- 侧边栏 -->
-    <el-aside :width="isCollapse ? '64px' : '200px'" class="sidebar">
+    <el-aside 
+      :width="isCollapse ? '64px' : '200px'" 
+      :class="['sidebar', { 'mobile-hidden': isMobile && isCollapse }]"
+    >
       <div class="logo">
         <img src="/logo.svg" alt="Logo" v-if="!isCollapse" />
         <span v-if="!isCollapse">用户中心</span>
@@ -61,6 +71,33 @@
           <el-menu-item index="/user/orders">
             <el-icon><Document /></el-icon>
             <template #title>订单列表</template>
+          </el-menu-item>
+        </el-sub-menu>
+        
+        <el-sub-menu index="promotion">
+          <template #title>
+            <el-icon><Share /></el-icon>
+            <span>推广管理</span>
+          </template>
+          <el-menu-item index="/user/promotion/agent">
+            <el-icon><UserFilled /></el-icon>
+            <template #title>代理推广</template>
+          </el-menu-item>
+          <el-menu-item index="/user/promotion/users">
+            <el-icon><User /></el-icon>
+            <template #title>代理用户</template>
+          </el-menu-item>
+          <el-menu-item index="/user/promotion/settings">
+            <el-icon><Setting /></el-icon>
+            <template #title>提现设置</template>
+          </el-menu-item>
+          <el-menu-item index="/user/promotion/withdraw">
+            <el-icon><Money /></el-icon>
+            <template #title>订单结算</template>
+          </el-menu-item>
+          <el-menu-item index="/user/promotion/withdraw-list">
+            <el-icon><List /></el-icon>
+            <template #title>提现列表</template>
           </el-menu-item>
         </el-sub-menu>
         
@@ -149,7 +186,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/store/user'
 import { ElMessageBox } from 'element-plus'
@@ -170,7 +207,9 @@ import {
   Management,
   List,
   Warning,
-  Money
+  Money,
+  Share,
+  UserFilled
 } from '@element-plus/icons-vue'
 
 const route = useRoute()
@@ -179,6 +218,23 @@ const userStore = useUserStore()
 
 // 侧边栏折叠状态
 const isCollapse = ref(false)
+
+// 移动端检测
+const isMobile = ref(false)
+
+// 检测是否为移动端
+const checkMobile = () => {
+  isMobile.value = window.innerWidth <= 768
+  // 移动端默认收起侧边栏
+  if (isMobile.value) {
+    isCollapse.value = true
+  }
+}
+
+// 监听窗口大小变化
+const handleResize = () => {
+  checkMobile()
+}
 
 // 当前激活的菜单
 const activeMenu = computed(() => route.path)
@@ -227,6 +283,12 @@ const breadcrumbItems = computed(() => {
     case '/user/orders':
       items.push('订单列表')
       break
+    case '/user/promotion/agent':
+      items.push('推广管理', '代理推广')
+      break
+    case '/user/promotion/settings':
+      items.push('推广管理', '提现设置')
+      break
   }
   return items
 })
@@ -270,13 +332,24 @@ const handleLogout = () => {
 onMounted(() => {
   // 确保获取最新的用户信息
   userStore.getUserInfoAction()
+  
+  // 初始化移动端检测
+  checkMobile()
+  
+  // 添加窗口大小变化监听
+  window.addEventListener('resize', handleResize)
 })
 
-// 监听路由变化，自动收起移动端侧边栏
+// 组件卸载时移除监听器
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
+})
+
+// 监听路由变化，移动端自动收起侧边栏
 watch(
   () => route.path,
   () => {
-    if (window.innerWidth <= 768) {
+    if (isMobile.value) {
       isCollapse.value = true
     }
   }
@@ -441,6 +514,18 @@ watch(
   overflow-y: auto;
 }
 
+// 移动端遮罩层
+.mobile-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  transition: opacity 0.3s ease;
+}
+
 // 响应式设计
 @media (max-width: 768px) {
   .user-layout {
@@ -453,30 +538,127 @@ watch(
     left: 0;
     height: 100vh;
     z-index: 1000;
+    width: 200px !important;
     transform: translateX(0);
     transition: transform 0.3s ease;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
     
-    &.collapsed {
+    &.mobile-hidden {
       transform: translateX(-100%);
+    }
+    
+    .logo {
+      height: 50px;
+      font-size: 16px;
+      
+      img {
+        width: 28px;
+        height: 28px;
+      }
+    }
+    
+    .sidebar-menu {
+      :deep(.el-menu-item) {
+        height: 45px;
+        line-height: 45px;
+        font-size: 14px;
+      }
+      
+      :deep(.el-sub-menu) {
+        .el-sub-menu__title {
+          height: 45px;
+          line-height: 45px;
+          font-size: 14px;
+        }
+        
+        .el-menu {
+          .el-menu-item {
+            height: 40px;
+            line-height: 40px;
+            font-size: 13px;
+          }
+        }
+      }
     }
   }
   
   .main-container {
     width: 100%;
     margin-left: 0;
-    transition: margin-left 0.3s ease;
   }
   
   .header {
     padding: 0 15px;
+    height: 50px;
     position: relative;
-    z-index: 999;
+    z-index: 998;
+    
+    .header-left {
+      .collapse-btn {
+        margin-right: 15px;
+        font-size: 16px;
+      }
+      
+      .breadcrumb {
+        font-size: 13px;
+        
+        :deep(.el-breadcrumb__item) {
+          .el-breadcrumb__inner {
+            font-size: 13px;
+          }
+        }
+      }
+    }
+    
+    .header-right {
+      gap: 12px;
+      
+      .user-info {
+        padding: 6px 8px;
+        
+        .username {
+          font-size: 13px;
+          max-width: 80px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        
+        .avatar {
+          width: 28px;
+          height: 28px;
+        }
+      }
+    }
   }
   
   .main-content {
-    padding: 15px;
+    padding: 15px 10px;
     width: 100%;
     overflow-x: hidden;
+  }
+}
+
+// 超小屏幕适配
+@media (max-width: 480px) {
+  .header {
+    .header-left {
+      .breadcrumb {
+        display: none;
+      }
+    }
+    
+    .header-right {
+      .user-info {
+        .username {
+          display: none;
+        }
+      }
+    }
+  }
+  
+  .main-content {
+    padding: 10px 8px;
   }
 }
 </style>

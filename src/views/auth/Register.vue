@@ -40,6 +40,7 @@
             placeholder="请输入推荐人"
             size="large"
             prefix-icon="User"
+            :readonly="agentReadonly"
           />
         </el-form-item>
         
@@ -99,15 +100,19 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, reactive, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/store/user'
 import { ElMessage } from 'element-plus'
 import { sendSmsCode as sendSmsCodeApi } from '@/api/auth'
 
 const router = useRouter()
+const route = useRoute()
 const userStore = useUserStore()
 const registerFormRef = ref()
+
+// 推荐人字段是否只读
+const agentReadonly = ref(false)
 
 // 表单数据
 const registerForm = reactive({
@@ -227,6 +232,15 @@ const sendSmsCode = async () => {
     smsCodeText.value = '获取验证码'
   }
 }
+
+// 初始化推荐人信息
+onMounted(() => {
+  const refParam = route.query.ref
+  if (refParam) {
+    registerForm.Agent = refParam
+    agentReadonly.value = true
+  }
+})
 
 // 注册处理
 const handleRegister = async () => {

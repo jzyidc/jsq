@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>复制功能测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-item {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .test-button {
+            background: #409eff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        .test-button:hover {
+            background: #337ecc;
+        }
+        .test-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background: #f0f9ff;
+            color: #409eff;
+            border: 1px solid #b3d8ff;
+        }
+        .error {
+            background: #fef0f0;
+            color: #f56c6c;
+            border: 1px solid #fbc4c4;
+        }
+        .warning {
+            background: #fdf6ec;
+            color: #e6a23c;
+            border: 1px solid #f5dab1;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>复制功能兼容性测试</h1>
+        <p>此页面用于测试不同环境下的复制功能兼容性</p>
+        
+        <div class="test-item">
+            <h3>测试文本</h3>
+            <input type="text" class="test-input" id="testText" value="https://example.com/register?ref=USER123" readonly>
+            <button class="test-button" onclick="testModernCopy()">现代API复制</button>
+            <button class="test-button" onclick="testLegacyCopy()">传统方法复制</button>
+            <button class="test-button" onclick="testCompatibleCopy()">兼容性复制</button>
+            <div id="result"></div>
+        </div>
+        
+        <div class="test-item">
+            <h3>环境检测</h3>
+            <div id="envInfo"></div>
+        </div>
+    </div>
+
+    <script>
+        // 检测环境信息
+        function detectEnvironment() {
+            const info = {
+                'Clipboard API支持': !!navigator.clipboard,
+                '安全上下文': window.isSecureContext,
+                '协议': window.location.protocol,
+                '用户代理': navigator.userAgent.substring(0, 100) + '...'
+            };
+            
+            let html = '';
+            for (const [key, value] of Object.entries(info)) {
+                html += `<p><strong>${key}:</strong> ${value}</p>`;
+            }
+            document.getElementById('envInfo').innerHTML = html;
+        }
+        
+        // 显示结果
+        function showResult(message, type = 'success') {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = `result ${type}`;
+            resultDiv.textContent = message;
+        }
+        
+        // 测试现代API复制
+        async function testModernCopy() {
+            const text = document.getElementById('testText').value;
+            try {
+                if (!navigator.clipboard) {
+                    throw new Error('Clipboard API 不支持');
+                }
+                if (!window.isSecureContext) {
+                    throw new Error('非安全上下文');
+                }
+                await navigator.clipboard.writeText(text);
+                showResult('现代API复制成功！', 'success');
+            } catch (error) {
+                showResult(`现代API复制失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // 测试传统方法复制
+        function testLegacyCopy() {
+            const text = document.getElementById('testText').value;
+            try {
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-999999px';
+                textArea.style.top = '-999999px';
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                
+                const successful = document.execCommand('copy');
+                document.body.removeChild(textArea);
+                
+                if (successful) {
+                    showResult('传统方法复制成功！', 'success');
+                } else {
+                    throw new Error('execCommand 返回 false');
+                }
+            } catch (error) {
+                showResult(`传统方法复制失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // 测试兼容性复制（与Vue组件中相同的逻辑）
+        async function testCompatibleCopy() {
+            const text = document.getElementById('testText').value;
+            try {
+                // 优先使用现代的 Clipboard API
+                if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(text);
+                    showResult('兼容性复制成功（使用现代API）！', 'success');
+                    return;
+                }
+                
+                // 降级方案：使用传统的 document.execCommand
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-999999px';
+                textArea.style.top = '-999999px';
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                
+                const successful = document.execCommand('copy');
+                document.body.removeChild(textArea);
+                
+                if (successful) {
+                    showResult('兼容性复制成功（使用传统方法）！', 'success');
+                } else {
+                    throw new Error('复制命令执行失败');
+                }
+            } catch (error) {
+                showResult(`兼容性复制失败，需要手动复制: ${error.message}`, 'warning');
+                // 在实际应用中，这里会显示手动复制的对话框
+                alert(`复制失败，请手动复制以下链接：\n\n${text}`);
+            }
+        }
+        
+        // 页面加载时检测环境
+        window.onload = function() {
+            detectEnvironment();
+        };
+    </script>
+</body>
+</html>

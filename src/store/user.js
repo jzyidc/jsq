@@ -41,11 +41,10 @@ export const useUserStore = defineStore('user', () => {
 
   // 计算属性
   const isLoggedIn = computed(() => !!token.value)
-  const isAdmin = computed(() => userInfo.value.role === 'admin')
   const isUser = computed(() => userInfo.value.role === 'user')
 
   // 登录
-  const loginAction = async (loginForm, isAdminLogin = false) => {
+  const loginAction = async (loginForm) => {
     try {
       loading.value = true
       
@@ -55,8 +54,8 @@ export const useUserStore = defineStore('user', () => {
       // 处理新的响应格式：Code为1000表示成功
       if (response.Code === 1000) {
         token.value = response.Token
-        // 根据登录类型设置用户角色
-        const userRole = isAdminLogin ? 'admin' : 'user'
+        // 设置用户角色为user
+        const userRole = 'user'
         // 根据登录返回的参数设置用户信息
         userInfo.value = {
           id: null,
@@ -271,7 +270,6 @@ export const useUserStore = defineStore('user', () => {
     
     // 计算属性
     isLoggedIn,
-    isAdmin,
     isUser,
     
     // 方法

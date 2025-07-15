@@ -1,7 +1,7 @@
 {
-  "name": "admin-user-system",
+  "name": "user-system",
   "version": "1.0.0",
-  "description": "中后台管理系统 - 基于Vue.js的用户管理和后台管理平台",
+  "description": "加速器管理系统 - 基于Vue.js的用户管理平台",
   "type": "module",
   "scripts": {
     "dev": "vite",

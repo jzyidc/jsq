@@ -20,8 +20,8 @@
             <div class="user-basic">
               <h3>{{ userInfo.username }}</h3>
               <p class="user-role">
-                <el-tag :type="userInfo.role === 'admin' ? 'danger' : 'primary'">
-                  {{ userInfo.role === 'admin' ? '管理员' : '普通用户' }}
+                <el-tag type="primary">
+                  普通用户
                 </el-tag>
               </p>
               <p class="join-time">加入时间：{{ userInfo.createTime || userInfo.reg_time || '--' }}</p>

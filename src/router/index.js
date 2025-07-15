@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useUserStore } from '@/store/user'
+import { getAppTitle } from '@/config'
 
 // 路由配置
 const routes = [
@@ -21,16 +22,7 @@ const routes = [
       requiresAuth: false
     }
   },
-  {
-    path: '/admin/login',
-    name: 'AdminLogin',
-    component: () => import('@/views/auth/Login.vue'),
-    meta: {
-      title: '管理员登录',
-      requiresAuth: false,
-      adminLogin: true
-    }
-  },
+
   {
     path: '/register',
     name: 'Register',
@@ -49,52 +41,7 @@ const routes = [
       requiresAuth: false
     }
   },
-  {
-    path: '/admin',
-    name: 'Admin',
-    component: () => import('@/views/admin/Layout.vue'),
-    meta: {
-      title: '管理员后台',
-      requiresAuth: true,
-      roles: ['admin']
-    },
-    children: [
-      {
-        path: '',
-        redirect: '/admin/dashboard'
-      },
-      {
-        path: 'dashboard',
-        name: 'AdminDashboard',
-        component: () => import('@/views/admin/Dashboard.vue'),
-        meta: {
-          title: '仪表盘',
-          requiresAuth: true,
-          roles: ['admin']
-        }
-      },
-      {
-        path: 'users',
-        name: 'UserManage',
-        component: () => import('@/views/admin/UserManage.vue'),
-        meta: {
-          title: '用户管理',
-          requiresAuth: true,
-          roles: ['admin']
-        }
-      },
-      {
-        path: 'settings',
-        name: 'AdminSettings',
-        component: () => import('@/views/admin/Settings.vue'),
-        meta: {
-          title: '系统设置',
-          requiresAuth: true,
-          roles: ['admin']
-        }
-      }
-    ]
-  },
+
   {
     path: '/user',
     name: 'User',
@@ -102,7 +49,7 @@ const routes = [
     meta: {
       title: '用户中心',
       requiresAuth: true,
-      roles: ['user', 'admin']
+      roles: ['user']
     },
     children: [
       {
@@ -116,7 +63,7 @@ const routes = [
         meta: {
           title: '欢迎页',
           requiresAuth: true,
-          roles: ['user', 'admin']
+          roles: ['user']
         }
       },
       {
@@ -126,7 +73,7 @@ const routes = [
         meta: {
           title: '个人资料',
           requiresAuth: true,
-          roles: ['user', 'admin']
+          roles: ['user']
         }
       },
 
@@ -137,7 +84,7 @@ const routes = [
         meta: {
           title: '账户充值',
           requiresAuth: true,
-          roles: ['user', 'admin']
+          roles: ['user']
         }
       },
       {
@@ -147,7 +94,7 @@ const routes = [
         meta: {
           title: '充值记录',
           requiresAuth: true,
-          roles: ['user', 'admin']
+          roles: ['user']
         }
       },
 
@@ -158,7 +105,7 @@ const routes = [
         meta: {
           title: '操作日志',
           requiresAuth: true,
-          roles: ['user', 'admin']
+          roles: ['user']
         }
       },
       {
@@ -168,7 +115,7 @@ const routes = [
         meta: {
           title: '项目线路订购',
           requiresAuth: true,
-          roles: ['user', 'admin']
+          roles: ['user']
         }
       },
       {
@@ -178,7 +125,7 @@ const routes = [
         meta: {
           title: '业务列表',
           requiresAuth: true,
-          roles: ['user', 'admin']
+          roles: ['user']
         }
       },
       {
@@ -188,7 +135,7 @@ const routes = [
         meta: {
           title: '过期业务',
           requiresAuth: true,
-          roles: ['user', 'admin']
+          roles: ['user']
         }
       },
       {
@@ -198,7 +145,57 @@ const routes = [
         meta: {
           title: '订单列表',
           requiresAuth: true,
-          roles: ['user', 'admin']
+          roles: ['user']
+        }
+      },
+      {
+        path: 'promotion/agent',
+        name: 'UserAgentPromotion',
+        component: () => import('@/views/user/promotion/AgentPromotion.vue'),
+        meta: {
+          title: '代理推广',
+          requiresAuth: true,
+          roles: ['user']
+        }
+      },
+      {
+        path: 'promotion/settings',
+        name: 'UserAgentSettings',
+        component: () => import('@/views/user/promotion/AgentSettings.vue'),
+        meta: {
+          title: '提现设置',
+          requiresAuth: true,
+          roles: ['user']
+        }
+      },
+      {
+        path: 'promotion/withdraw',
+        name: 'UserOrderWithdraw',
+        component: () => import('@/views/user/promotion/OrderWithdraw.vue'),
+        meta: {
+          title: '订单结算',
+          requiresAuth: true,
+          roles: ['user']
+        }
+      },
+      {
+        path: 'promotion/users',
+        name: 'UserAgentUsers',
+        component: () => import('@/views/user/promotion/AgentUsers.vue'),
+        meta: {
+          title: '代理用户',
+          requiresAuth: true,
+          roles: ['user']
+        }
+      },
+      {
+        path: 'promotion/withdraw-list',
+        name: 'UserWithdrawList',
+        component: () => import('@/views/user/promotion/WithdrawList.vue'),
+        meta: {
+          title: '提现列表',
+          requiresAuth: true,
+          roles: ['user']
         }
       }
     ]
@@ -231,17 +228,13 @@ router.beforeEach(async (to, from, next) => {
   const userStore = useUserStore()
   
   // 设置页面标题
-  document.title = to.meta.title ? `${to.meta.title} - 中后台管理系统` : '中后台管理系统'
+  const appTitle = getAppTitle()
+  document.title = to.meta.title ? `${to.meta.title} - ${appTitle}` : appTitle
   
   // 检查是否需要登录
   if (to.meta.requiresAuth) {
     if (!userStore.isLoggedIn) {
-      // 如果访问管理员路径，跳转到管理员登录页面
-      if (to.path.startsWith('/admin')) {
-        next('/admin/login')
-      } else {
-        next('/login')
-      }
+      next('/login')
       return
     }
     
@@ -264,20 +257,15 @@ router.beforeEach(async (to, from, next) => {
       return
     }
     
-    // 如果仍然没有角色信息，根据访问路径推断角色
+    // 如果仍然没有角色信息，设置为用户角色
     if (!userStore.userInfo.role) {
-      if (to.path.startsWith('/admin')) {
-        userStore.updateUserInfo({ role: 'admin' })
-      } else if (to.path.startsWith('/user')) {
-        userStore.updateUserInfo({ role: 'user' })
-      }
+      userStore.updateUserInfo({ role: 'user' })
     }
   }
   
   // 已登录用户访问登录/注册页面时重定向
   if ((to.path === '/login' || to.path === '/register') && userStore.isLoggedIn) {
-    const role = userStore.userInfo.role
-    next(role === 'admin' ? '/admin' : '/')
+    next('/')
     return
   }
   

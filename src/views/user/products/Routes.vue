@@ -170,13 +170,16 @@
                 v-for="node in filteredNodes" 
                 :key="node.id" 
                 class="node-item"
-                :class="{ 'node-selected': orderList.find(n => n.id === node.id) }"
+                :class="{ 
+                  'node-selected': orderList.find(n => n.id === node.id),
+                  'node-sold-out': getMaxSelectableQuantity(node.stock) === 0
+                }"
               >
                 <div class="node-header">
                   <div class="node-name">{{ node.name }}</div>
                   <div class="node-status">
-                    <el-tag :type="node.stock === '99+' ? 'success' : 'warning'" size="small">
-                      {{ node.stock === '99+' ? '充足' : '紧张' }}
+                    <el-tag :type="getStockStatusType(node.stock)" size="small">
+                      {{ getStockStatusText(node.stock) }}
                     </el-tag>
                   </div>
                 </div>
@@ -211,24 +214,25 @@
                   </div>
                   
                   <!-- 数量选择器 -->
-                  <div class="quantity-selector" v-if="!orderList.find(n => n.id === node.id)">
+                  <div class="quantity-selector" v-if="!orderList.find(n => n.id === node.id) && getMaxSelectableQuantity(node.stock) > 0">
                     <span class="quantity-label">数量：</span>
                     <el-input-number 
                       v-model="node.selectedQuantity" 
                       :min="1" 
-                      :max="20" 
+                      :max="getMaxSelectableQuantity(node.stock)" 
                       size="small"
                       class="quantity-input-node"
                     />
                   </div>
                   
                   <el-button 
-                    :type="orderList.find(n => n.id === node.id) ? 'success' : 'primary'"
+                    :type="orderList.find(n => n.id === node.id) ? 'success' : (getMaxSelectableQuantity(node.stock) === 0 ? 'info' : 'primary')"
                     :icon="orderList.find(n => n.id === node.id) ? 'Check' : 'Plus'"
+                    :disabled="getMaxSelectableQuantity(node.stock) === 0 && !orderList.find(n => n.id === node.id)"
                     @click="addToOrder(node)"
                     class="add-btn"
                   >
-                    {{ orderList.find(n => n.id === node.id) ? '已添加' : '加入订单' }}
+                    {{ getButtonText(node) }}
                   </el-button>
                 </div>
               </div>
@@ -320,7 +324,7 @@
                     <el-input-number 
                       v-model="item.quantity" 
                       :min="1" 
-                      :max="20" 
+                      :max="getMaxSelectableQuantity(item.stock)" 
                       size="small"
                       class="quantity-input"
                       @change="updateOrderQuantity(item)"
@@ -542,20 +546,37 @@ const regionNodeCounts = computed(() => {
 
 const orderList = ref([])
 const addToOrder = (node) => {
-  if (!orderList.value.find(n => n.id === node.id)) {
-    // 使用节点上选择的数量，如果没有选择则默认为1
-    const quantity = node.selectedQuantity || 1
-    const nodeWithQuantity = { ...node, quantity: quantity }
-    orderList.value.push(nodeWithQuantity)
-    ElMessage.success(`已添加 ${node.name} 到订单，数量：${quantity}`)
-    // 添加节点时显示订单面板
-    isSummaryHidden.value = false
-    // 取消自动隐藏
-    if (autoHideTimer.value) {
-      clearTimeout(autoHideTimer.value)
-    }
-  } else {
+  // 检查是否已在订单中
+  if (orderList.value.find(n => n.id === node.id)) {
     ElMessage.warning('该节点已在订单中')
+    return
+  }
+  
+  // 检查库存是否为0
+  const maxQuantity = getMaxSelectableQuantity(node.stock)
+  if (maxQuantity === 0) {
+    ElMessage.error('该节点已售罄，无法加入订单')
+    return
+  }
+  
+  // 使用节点上选择的数量，如果没有选择则默认为1
+  const quantity = node.selectedQuantity || 1
+  
+  // 验证选择的数量是否超过库存
+  if (quantity > maxQuantity) {
+    ElMessage.warning(`选择数量不能超过剩余库存(${maxQuantity})`)
+    return
+  }
+  
+  const nodeWithQuantity = { ...node, quantity: quantity }
+  orderList.value.push(nodeWithQuantity)
+  ElMessage.success(`已添加 ${node.name} 到订单，数量：${quantity}`)
+  
+  // 添加节点时显示订单面板
+  isSummaryHidden.value = false
+  // 取消自动隐藏
+  if (autoHideTimer.value) {
+    clearTimeout(autoHideTimer.value)
   }
 }
 
@@ -627,12 +648,16 @@ const totalQuantity = computed(() => {
 
 // 更新订单项数量
 const updateOrderQuantity = (item) => {
+  const maxQuantity = getMaxSelectableQuantity(item.stock)
+  
   // 确保数量在有效范围内
   if (item.quantity < 1) {
     item.quantity = 1
-  } else if (item.quantity > 20) {
-    item.quantity = 20
+  } else if (item.quantity > maxQuantity) {
+    item.quantity = maxQuantity
+    ElMessage.warning(`数量不能超过剩余库存(${maxQuantity})`)
   }
+  
   ElMessage.info(`已更新 ${item.name} 的数量为 ${item.quantity}`)
 }
 
@@ -641,9 +666,7 @@ const autoAssignNodes = () => {
   const availableNodes = allFilteredNodes.value
     .filter(node => {
       // 过滤掉库存为0或无效的节点
-      if (node.stock === '99+') return true // '99+'表示库存充足
-      const stock = parseInt(node.stock)
-      return !isNaN(stock) && stock > 0
+      return getMaxSelectableQuantity(node.stock) > 0
     })
     .sort((a, b) => {
       // 按剩余可用数量降序排序，优先分配库存多的节点
@@ -747,6 +770,43 @@ const resetAssignment = () => {
   if (!isHovering.value) {
     startAutoHide()
   }
+}
+
+// 获取库存状态类型
+const getStockStatusType = (stock) => {
+  if (stock === '99+') return 'success'
+  const stockNum = parseInt(stock)
+  if (isNaN(stockNum) || stockNum === 0) return 'danger'
+  if (stockNum <= 5) return 'warning'
+  return 'success'
+}
+
+// 获取库存状态文本
+const getStockStatusText = (stock) => {
+  if (stock === '99+') return '充足'
+  const stockNum = parseInt(stock)
+  if (isNaN(stockNum) || stockNum === 0) return '售罄'
+  if (stockNum <= 5) return '紧张'
+  return '充足'
+}
+
+// 获取最大可选择数量
+const getMaxSelectableQuantity = (stock) => {
+  if (stock === '99+') return 20 // 库存充足时最大可选20个
+  const stockNum = parseInt(stock)
+  if (isNaN(stockNum) || stockNum <= 0) return 0
+  return Math.min(stockNum, 20) // 不能超过库存，也不能超过20
+}
+
+// 获取按钮文本
+const getButtonText = (node) => {
+  if (orderList.value.find(n => n.id === node.id)) {
+    return '已添加'
+  }
+  if (getMaxSelectableQuantity(node.stock) === 0) {
+    return '售罄'
+  }
+  return '加入订单'
 }
 
 // 验证分组编号
@@ -1380,6 +1440,41 @@ onUnmounted(() => {
         
         .node-name {
           color: #67c23a;
+        }
+      }
+      
+      // 售罄状态样式
+      &.node-sold-out {
+        opacity: 0.6;
+        background: #f5f7fa;
+        border-color: #dcdfe6;
+        cursor: not-allowed;
+        
+        &:hover {
+          transform: none;
+          box-shadow: none;
+          border-color: #dcdfe6;
+        }
+        
+        .node-name {
+          color: #909399;
+        }
+        
+        .node-price .price-value {
+          color: #c0c4cc;
+        }
+        
+        .add-btn {
+          background: #f5f7fa;
+          border-color: #dcdfe6;
+          color: #c0c4cc;
+          cursor: not-allowed;
+          
+          &:hover {
+            background: #f5f7fa;
+            border-color: #dcdfe6;
+            color: #c0c4cc;
+          }
         }
       }
       

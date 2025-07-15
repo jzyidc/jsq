@@ -328,6 +328,20 @@ export const setNodePassword = (params) => {
   })
 }
 
+// 获取节点续费价格
+export const getNodeRenewPrice = (params) => {
+  const data = {
+    Action: 'GetNodeRenewPrice',
+    Id: params.Id, // 节点ID数组
+    RenewTime: params.RenewTime // 续费时长
+  }
+  return request({
+    url: '',
+    method: 'post',
+    data
+  })
+}
+
 // 获取系统日志
 export const getSysLog = (params = {}) => {
   const data = {
@@ -392,6 +406,17 @@ export const getNotice = () => {
     method: 'post',
     data: {
       Action: 'GetNotice'
+    }
+  })
+}
+
+// 获取代理推广信息
+export const getPromotionInfo = () => {
+  return request({
+    url: '',
+    method: 'post',
+    data: {
+      Action: 'GetPromotionInfo'
     }
   })
 }

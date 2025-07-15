@@ -73,10 +73,7 @@
               <el-icon><UserFilled /></el-icon>
               <span>用户注册</span>
             </div>
-            <div class="link-item" @click="navigateTo('/admin')">
-              <el-icon><Setting /></el-icon>
-              <span>管理后台</span>
-            </div>
+
             <div class="link-item" @click="navigateTo('/user')">
               <el-icon><Avatar /></el-icon>
               <span>用户中心</span>

@@ -11,22 +11,22 @@
       <div class="records-content">
         <!-- 筛选条件 -->
         <div class="filter-section">
-          <el-row :gutter="16">
-            <el-col :span="6">
+          <el-row :gutter="16" class="filter-row">
+            <el-col :xs="24" :sm="12" :md="6" :lg="6" :xl="6">
               <el-select v-model="filterStatus" placeholder="支付状态" clearable @change="handleFilterChange">
                 <el-option label="全部" value="" />
                 <el-option label="已支付" value="paid" />
                 <el-option label="待支付" value="pending" />
               </el-select>
             </el-col>
-            <el-col :span="6">
+            <el-col :xs="24" :sm="12" :md="6" :lg="6" :xl="6">
               <el-select v-model="filterType" placeholder="支付方式" clearable @change="handleFilterChange">
                 <el-option label="全部" value="" />
                 <el-option label="支付宝" value="支付宝" />
                 <el-option label="微信" value="微信" />
               </el-select>
             </el-col>
-            <el-col :span="8">
+            <el-col :xs="24" :sm="16" :md="8" :lg="8" :xl="8">
               <el-date-picker
                 v-model="dateRange"
                 type="daterange"
@@ -36,12 +36,13 @@
                 format="YYYY-MM-DD"
                 value-format="YYYY-MM-DD"
                 @change="handleFilterChange"
+                class="mobile-date-picker"
               />
             </el-col>
-            <el-col :span="4">
-              <el-button type="primary" @click="refreshRecords" :loading="loading">
+            <el-col :xs="24" :sm="8" :md="4" :lg="4" :xl="4">
+              <el-button type="primary" @click="refreshRecords" :loading="loading" class="refresh-btn">
                 <el-icon><Refresh /></el-icon>
-                刷新
+                <span class="btn-text">刷新</span>
               </el-button>
             </el-col>
           </el-row>
@@ -49,8 +50,8 @@
         
         <!-- 统计信息 -->
         <div class="stats-section">
-          <el-row :gutter="16">
-            <el-col :span="8">
+          <el-row :gutter="16" class="stats-row">
+            <el-col :xs="24" :sm="8" :md="8" :lg="8" :xl="8">
               <div class="stat-card">
                 <div class="stat-icon success">
                   <el-icon><Money /></el-icon>
@@ -61,7 +62,7 @@
                 </div>
               </div>
             </el-col>
-            <el-col :span="8">
+            <el-col :xs="24" :sm="8" :md="8" :lg="8" :xl="8">
               <div class="stat-card">
                 <div class="stat-icon primary">
                   <el-icon><Document /></el-icon>
@@ -72,7 +73,7 @@
                 </div>
               </div>
             </el-col>
-            <el-col :span="8">
+            <el-col :xs="24" :sm="8" :md="8" :lg="8" :xl="8">
               <div class="stat-card">
                 <div class="stat-icon warning">
                   <el-icon><Clock /></el-icon>
@@ -669,6 +670,88 @@ onUnmounted(() => {
   animation: fadeInUp 0.6s ease-out;
 }
 
+// 移动端适配样式
+.mobile-date-picker {
+  width: 100%;
+}
+
+.refresh-btn {
+  width: 100%;
+  
+  .btn-text {
+    margin-left: 4px;
+  }
+}
+
+// 移动端表格优化
+@media (max-width: 992px) {
+  .table-section {
+    :deep(.el-table) {
+      .el-table__header {
+        th {
+          font-size: 13px;
+          padding: 8px 6px;
+        }
+      }
+      
+      .el-table__body {
+        td {
+          font-size: 13px;
+        }
+      }
+    }
+  }
+}
+
+// 中等屏幕适配
+@media (max-width: 992px) and (min-width: 769px) {
+  .records-container {
+    padding: 16px 0;
+  }
+  
+  .records-card {
+    margin: 0 12px;
+  }
+  
+  .records-content {
+    .filter-section {
+      margin: 0 16px 20px 16px;
+      
+      .filter-row {
+        .el-col {
+          margin-bottom: 8px;
+          
+          &:last-child {
+            margin-bottom: 0;
+          }
+        }
+      }
+    }
+    
+    .stats-section {
+      margin: 0 16px 20px 16px;
+      
+      .stats-row {
+        .el-col {
+          margin-bottom: 8px;
+          
+          &:last-child {
+            margin-bottom: 0;
+          }
+        }
+      }
+    }
+    
+    .table-section {
+      margin: 0 16px 20px 16px;
+    }
+    
+    .pagination-container {
+      margin: 20px 16px 0 16px;
+    }
+  }
+}
+
 // 响应式设计
 @media (max-width: 768px) {
   .records-container {
@@ -680,172 +763,358 @@ onUnmounted(() => {
   }
   
   .records-card {
+    border-radius: 8px;
+    margin: 0 8px;
+    
+    :deep(.el-card__header) {
+      padding: 20px 16px;
+    }
+    
     :deep(.el-card__body) {
       padding: 16px 0;
     }
   }
   
+  .card-header {
+    h3 {
+      font-size: 20px;
+      
+      &::before {
+        font-size: 24px;
+        margin-right: 8px;
+      }
+    }
+    
+    p {
+      font-size: 14px;
+    }
+  }
+  
   .records-content {
     .filter-section {
-      margin: 0 16px 24px 16px;
-      padding: 16px;
-      overflow-x: auto;
+      margin: 0 12px 20px 12px;
+      padding: 16px 12px;
+      border-radius: 8px;
+      
+      .filter-row {
+        .el-col {
+          margin-bottom: 12px;
+          
+          &:last-child {
+            margin-bottom: 0;
+          }
+        }
+      }
+      
+      .el-select,
+      .el-date-picker {
+        width: 100%;
+      }
+      
+      .mobile-date-picker {
+        :deep(.el-input__wrapper) {
+          font-size: 14px;
+        }
+      }
     }
     
     .stats-section {
-      margin: 0 16px 24px 16px;
+      margin: 0 12px 20px 12px;
+      
+      .stats-row {
+        .el-col {
+          margin-bottom: 12px;
+          
+          &:last-child {
+            margin-bottom: 0;
+          }
+        }
+      }
+      
+      .stat-card {
+        padding: 16px 12px;
+        border-radius: 8px;
+        
+        .stat-icon {
+          width: 40px;
+          height: 40px;
+          font-size: 18px;
+          margin-right: 12px;
+        }
+        
+        .stat-content {
+          .stat-value {
+            font-size: 20px;
+          }
+          
+          .stat-label {
+            font-size: 13px;
+          }
+        }
+      }
     }
     
     .table-section {
-      margin: 0 16px 24px 16px;
+      margin: 0 12px 20px 12px;
+      overflow-x: auto;
+      width: calc(100% - 24px);
+      
+      :deep(.el-table) {
+        font-size: 13px;
+        min-width: 700px;
+        border-radius: 8px;
+        
+        .el-table__cell {
+          padding: 10px 8px;
+        }
+        
+        .action-buttons {
+          flex-direction: column;
+          gap: 4px;
+          
+          .el-button {
+            width: 100%;
+            font-size: 11px;
+            padding: 4px 6px;
+          }
+        }
+        
+        .order-number {
+          font-size: 11px;
+          word-break: break-all;
+          
+          .copy-btn {
+            margin-left: 4px;
+          }
+        }
+        
+        .amount {
+          font-size: 14px;
+        }
+        
+        .time-info {
+          font-size: 12px;
+          
+          .time-ago {
+            font-size: 10px;
+          }
+        }
+      }
     }
     
     .pagination-container {
-      margin: 24px 16px 0 16px;
-    }
-  }
-  
-  .filter-section {
-    padding: 16px;
-    overflow-x: auto;
-    
-    .el-row {
-      .el-col {
-        margin-bottom: 12px;
-      }
-    }
-  }
-  
-  .stats-section {
-    .el-row {
-      .el-col {
-        margin-bottom: 12px;
-      }
-    }
-    
-    .stat-card {
-      padding: 16px;
+      margin: 20px 12px 0 12px;
+      overflow-x: auto;
       
-      .stat-icon {
-        width: 40px;
-        height: 40px;
-        font-size: 18px;
-      }
-      
-      .stat-content {
-        .stat-value {
-          font-size: 20px;
-        }
-      }
-    }
-  }
-  
-  .table-section {
-    overflow-x: auto;
-    width: 100%;
-    
-    :deep(.el-table) {
-      font-size: 14px;
-      min-width: 800px;
-      
-      .action-buttons {
-        flex-direction: column;
-        gap: 4px;
+      :deep(.el-pagination) {
+        justify-content: center;
+        flex-wrap: wrap;
+        font-size: 13px;
         
-        .el-button {
-          width: 100%;
-          font-size: 12px;
+        .el-pagination__sizes {
+          margin-right: 8px;
+        }
+        
+        .el-pagination__jump {
+          margin-left: 8px;
         }
       }
-      
-      .order-number {
-        font-size: 12px;
-        word-break: break-all;
-      }
-    }
-  }
-  
-  .pagination-container {
-    overflow-x: auto;
-    
-    :deep(.el-pagination) {
-      justify-content: center;
-      flex-wrap: wrap;
     }
   }
 }
 
 @media (max-width: 480px) {
   .records-container {
-    padding: 12px 0;
+    padding: 8px 0;
     width: 100%;
+  }
+  
+  .records-card {
+    margin: 0 4px;
+    border-radius: 6px;
+    
+    :deep(.el-card__header) {
+      padding: 16px 12px;
+    }
+    
+    :deep(.el-card__body) {
+      padding: 12px 0;
+    }
   }
   
   .card-header {
     h3 {
-      font-size: 20px;
+      font-size: 18px;
+      
+      &::before {
+        font-size: 20px;
+        margin-right: 6px;
+      }
+    }
+    
+    p {
+      font-size: 13px;
     }
   }
   
   .records-content {
     .filter-section {
-      margin: 0 12px 24px 12px;
+      margin: 0 8px 16px 8px;
+      padding: 12px 8px;
+      border-radius: 6px;
+      
+      .filter-row {
+        .el-col {
+          margin-bottom: 10px;
+          
+          &:last-child {
+            margin-bottom: 0;
+          }
+        }
+      }
+      
+      .mobile-date-picker {
+        :deep(.el-input__wrapper) {
+          font-size: 13px;
+        }
+      }
+      
+      .refresh-btn {
+        font-size: 13px;
+        padding: 8px 12px;
+        
+        .btn-text {
+          margin-left: 2px;
+        }
+      }
     }
     
     .stats-section {
-      margin: 0 12px 24px 12px;
+      margin: 0 8px 16px 8px;
+      
+      .stats-row {
+        .el-col {
+          margin-bottom: 10px;
+          
+          &:last-child {
+            margin-bottom: 0;
+          }
+        }
+      }
+      
+      .stat-card {
+        padding: 12px 8px;
+        border-radius: 6px;
+        
+        .stat-icon {
+          width: 36px;
+          height: 36px;
+          font-size: 16px;
+          margin-right: 10px;
+        }
+        
+        .stat-content {
+          .stat-value {
+            font-size: 18px;
+          }
+          
+          .stat-label {
+            font-size: 12px;
+          }
+        }
+      }
     }
     
     .table-section {
-      margin: 0 12px 24px 12px;
+      margin: 0 8px 16px 8px;
+      overflow-x: auto;
+      width: calc(100% - 16px);
+      
+      :deep(.el-table) {
+        min-width: 600px;
+        font-size: 12px;
+        border-radius: 6px;
+        
+        .el-table__cell {
+          padding: 8px 4px;
+        }
+        
+        .action-buttons {
+          .el-button {
+            font-size: 10px;
+            padding: 3px 5px;
+          }
+        }
+        
+        .order-number {
+          font-size: 10px;
+        }
+        
+        .amount {
+          font-size: 13px;
+        }
+        
+        .time-info {
+          font-size: 11px;
+          
+          .time-ago {
+            font-size: 9px;
+          }
+        }
+      }
     }
     
     .pagination-container {
-      margin: 24px 12px 0 12px;
-    }
-  }
-  
-  .filter-section {
-    padding: 12px;
-    
-    .el-row {
-      .el-col {
-        span: 24;
-        margin-bottom: 8px;
-      }
-    }
-  }
-  
-  .stats-section {
-    .el-row {
-      .el-col {
-        span: 24;
-        margin-bottom: 8px;
-      }
-    }
-    
-    .stat-card {
-      padding: 12px;
+      margin: 16px 8px 0 8px;
       
-      .stat-content {
-        .stat-value {
-          font-size: 18px;
+      :deep(.el-pagination) {
+        font-size: 12px;
+        
+        .el-pagination__sizes {
+          margin-right: 6px;
         }
         
-        .stat-label {
-          font-size: 12px;
+        .el-pagination__jump {
+          margin-left: 6px;
+        }
+        
+        .el-pager {
+          .number {
+            min-width: 28px;
+            height: 28px;
+            line-height: 28px;
+          }
         }
       }
     }
   }
   
-  .table-section {
-    :deep(.el-table) {
-      min-width: 600px;
-      font-size: 12px;
+  // 弹窗适配
+  :deep(.el-dialog) {
+    width: 95% !important;
+    margin: 5vh auto;
+    
+    .el-dialog__header {
+      padding: 16px;
+    }
+    
+    .el-dialog__body {
+      padding: 16px;
+    }
+    
+    .el-dialog__footer {
+      padding: 12px 16px;
+    }
+  }
+  
+  .order-detail {
+    :deep(.el-descriptions) {
+      .el-descriptions__label {
+        font-size: 13px;
+      }
       
-      .el-table__cell {
-        padding: 8px 4px;
+      .el-descriptions__content {
+        font-size: 13px;
       }
     }
   }

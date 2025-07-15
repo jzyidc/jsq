@@ -2,8 +2,8 @@
   <div class="login-container">
     <div class="login-box">
       <div class="login-header">
-        <h2>XXX管理系统</h2>
-        <p>{{ isAdminLogin ? '管理员登录' : '欢迎登录' }}</p>
+        <h2>会员登录</h2>
+        <p>欢迎登录</p>
       </div>
       
       <el-form
@@ -16,9 +16,9 @@
         <el-form-item prop="username">
           <el-input
             v-model="loginForm.username"
-            placeholder="请输入用户名或邮箱"
+            placeholder="请输入手机号"
             size="large"
-            prefix-icon="UserName"
+            prefix-icon="Iphone"
           />
         </el-form-item>
         
@@ -52,19 +52,11 @@
           </el-button>
         </el-form-item>
         
-        <el-form-item v-if="!isAdminLogin">
+        <el-form-item>
           <div class="register-link">
             还没有账号？
             <el-link type="primary" @click="$router.push('/register')">
               立即注册
-            </el-link>
-          </div>
-        </el-form-item>
-        
-        <el-form-item v-if="isAdminLogin">
-          <div class="register-link">
-            <el-link type="primary" @click="$router.push('/login')">
-              普通用户登录
             </el-link>
           </div>
         </el-form-item>
@@ -84,8 +76,7 @@ const route = useRoute()
 const userStore = useUserStore()
 const loginFormRef = ref()
 
-// 判断是否为管理员登录
-const isAdminLogin = computed(() => route.meta?.adminLogin || false)
+
 
 // 表单数据
 const loginForm = reactive({
@@ -114,17 +105,11 @@ const handleLogin = async () => {
     const valid = await loginFormRef.value.validate()
     if (!valid) return
     
-    const result = await userStore.loginAction(loginForm, isAdminLogin.value)
+    const result = await userStore.loginAction(loginForm, false)
     
     if (result.success) {
-      // 根据登录类型跳转到不同页面
-      if (isAdminLogin.value) {
-        // 管理员登录跳转到管理后台
-        router.push('/admin')
-      } else {
-        // 普通用户登录跳转到首页
-        router.push('/')
-      }
+      // 登录成功跳转到用户中心
+      router.push('/user')
     }
   } catch (error) {
     console.error('登录失败:', error)

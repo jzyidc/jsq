@@ -28,8 +28,8 @@
             <el-col :span="12">
               <div class="info-item">
                 <label>角色：</label>
-                <el-tag :type="userInfo.role === 'admin' ? 'danger' : 'primary'">
-                  {{ userInfo.role === 'admin' ? '管理员' : '普通用户' }}
+                <el-tag type="primary">
+                  普通用户
                 </el-tag>
               </div>
             </el-col>

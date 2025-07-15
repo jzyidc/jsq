@@ -77,7 +77,7 @@
                   </el-dropdown-item>
                   <el-dropdown-item command="dashboard">
                     <el-icon><DataBoard /></el-icon>
-                    {{ userStore.userInfo.role === 'admin' ? '管理后台' : '用户中心' }}
+                    用户中心
                   </el-dropdown-item>
                   <el-dropdown-item command="logout" divided>
                     <el-icon><Lock /></el-icon>
@@ -131,7 +131,7 @@
               <template v-else>
                 <el-button type="primary" size="large" class="dashboard-btn" @click="goToDashboard">
                   <el-icon><DataBoard /></el-icon>
-                  进入{{ userStore.userInfo.role === 'admin' ? '管理后台' : '用户中心' }}
+                  进入用户中心
                 </el-button>
                 <el-button size="large" class="business-btn" @click="$router.push('/user/business/list')">
                   <el-icon><Monitor /></el-icon>
@@ -546,13 +546,9 @@ onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
 })
 
-// 进入后台/用户中心
+// 进入用户中心
 const goToDashboard = () => {
-  if (userStore.userInfo.role === 'admin') {
-    router.push('/admin')
-  } else {
-    router.push('/user')
-  }
+  router.push('/user')
 }
 
 // 处理下拉菜单命令

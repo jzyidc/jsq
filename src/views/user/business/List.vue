@@ -456,6 +456,7 @@
                 placeholder="请选择续费时长"
                 style="width: 100%"
                 size="large"
+                @change="fetchRenewPrice"
               >
                 <el-option label="一天" value="day">
                   <div class="renew-option">
@@ -495,6 +496,22 @@
                 </el-option>
               </el-select>
             </el-form-item>
+          </div>
+
+          <el-divider class="section-divider">
+            <el-icon><Money /></el-icon>
+          </el-divider>
+
+          <div class="renew-price-section">
+            <h4 class="section-title">
+              <el-icon><Money /></el-icon>
+              续费价格
+            </h4>
+            <div class="renew-price-info">
+              <div class="price-label">总价:</div>
+              <div class="price-value" v-if="renewDialog.priceLoading">加载中...</div>
+              <div class="price-value" v-else>{{ renewDialog.price || '0.00' }}元</div>
+            </div>
           </div>
         </el-form>
       </div>
@@ -734,10 +751,10 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { 
   Plus, Search, Refresh, Switch, Monitor, VideoPlay, Location, Connection, 
   ArrowDown, Aim, Close, Check, CreditCard, Clock, Timer, Calendar, Setting, Key,
-  CopyDocument, List, Document, Download
+  CopyDocument, List, Document, Download, Money
 } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
-import { getNodeData, setGroup, getGameData, getAreaData, switchNode, renewNode, setNodePassword } from '@/api/auth'
+import { getNodeData, setGroup, getGameData, getAreaData, switchNode, renewNode, setNodePassword, getNodeRenewPrice } from '@/api/auth'
 
 // 路由
 const router = useRouter()
@@ -847,7 +864,9 @@ const renewDialog = reactive({
     renewTime: [
       { required: true, message: '请选择续费时长', trigger: 'change' }
     ]
-  }
+  },
+  price: null, // 新增：续费价格
+  priceLoading: false // 新增：价格加载状态
 })
 
 const renewFormRef = ref()
@@ -921,10 +940,9 @@ const handleCreate = () => {
 const handleRenew = (row) => {
   // 设置当前节点信息
   renewDialog.currentNode = row
-  
   // 重置表单
   renewDialog.form.renewTime = ''
-  
+  renewDialog.price = null // 新增：重置价格
   // 显示对话框
   renewDialog.visible = true
 }
@@ -1142,7 +1160,6 @@ const handleBatchRenew = () => {
     ElMessage.warning('请先选择要续费的节点')
     return
   }
-  
   ElMessageBox.confirm(
     `确定要为选中的 ${selectedRows.value.length} 个节点进行批量续费吗？`,
     '批量续费确认',
@@ -1159,10 +1176,9 @@ const handleBatchRenew = () => {
       IpAddress: '多个IP',
       EndTime: '不同到期时间'
     }
-    
     // 重置表单
     renewDialog.form.renewTime = ''
-    
+    renewDialog.price = null // 新增：重置价格
     // 显示对话框
     renewDialog.visible = true
   }).catch(() => {
@@ -1477,6 +1493,41 @@ const handleProvinceChange = async (province) => {
   } catch (error) {
     console.error('获取地区列表失败:', error)
     ElMessage.error('获取地区列表失败')
+  }
+}
+
+// 监听续费时长变化，获取价格
+const fetchRenewPrice = async () => {
+  renewDialog.price = null
+  if (!renewDialog.form.renewTime) return
+  renewDialog.priceLoading = true
+  let nodeIds
+  if (renewDialog.currentNode && renewDialog.currentNode.Game === '批量续费') {
+    nodeIds = selectedRows.value.map(row => row.Id)
+  } else if (renewDialog.currentNode && renewDialog.currentNode.Id) {
+    nodeIds = [renewDialog.currentNode.Id]
+  } else {
+    renewDialog.priceLoading = false
+    return
+  }
+  try {
+    const res = await getNodeRenewPrice({
+      Id: nodeIds,
+      RenewTime: renewDialog.form.renewTime
+    })
+    if (res.Code === 1000 && res.List) {
+      if (renewDialog.currentNode.Game === '批量续费') {
+        renewDialog.price = res.List.reduce((sum, item) => sum + (item.Price || 0), 0)
+      } else {
+        renewDialog.price = res.List[0]?.Price ?? null
+      }
+    } else {
+      renewDialog.price = null
+    }
+  } catch (e) {
+    renewDialog.price = null
+  } finally {
+    renewDialog.priceLoading = false
   }
 }
 
@@ -2026,6 +2077,47 @@ onMounted(() => {
        font-weight: 500;
        box-shadow: 0 1px 3px rgba(114, 46, 209, 0.3);
      }
+  }
+}
+
+.renew-price-section {
+  margin-top: 24px;
+  padding: 16px;
+  background-color: #f5f7fa;
+  border-radius: 4px;
+  border: 1px solid #e4e7ed;
+
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-size: 16px;
+    font-weight: 500;
+    color: #606266;
+
+    .el-icon {
+      color: #409eff;
+    }
+  }
+
+  .renew-price-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    .price-label {
+      font-size: 18px;
+      font-weight: 600;
+      color: #303133;
+    }
+
+    .price-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: #f56c6c;
+      font-family: 'Arial', sans-serif;
+    }
   }
 }
 

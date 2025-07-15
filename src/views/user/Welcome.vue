@@ -26,7 +26,7 @@
 
     <div class="stats-section">
       <el-row :gutter="20">
-        <el-col :span="6">
+        <el-col :xs="12" :sm="12" :md="6" :lg="6" :xl="6">
           <el-card class="stat-card">
             <div class="stat-item">
               <el-icon class="stat-icon" color="#67C23A"><Money /></el-icon>
@@ -37,7 +37,7 @@
             </div>
           </el-card>
         </el-col>
-        <el-col :span="6">
+        <el-col :xs="12" :sm="12" :md="6" :lg="6" :xl="6">
           <el-card class="stat-card">
             <div class="stat-item">
               <el-icon class="stat-icon" color="#409EFF"><Monitor /></el-icon>
@@ -48,7 +48,7 @@
             </div>
           </el-card>
         </el-col>
-        <el-col :span="6">
+        <el-col :xs="12" :sm="12" :md="6" :lg="6" :xl="6">
           <el-card class="stat-card">
             <div class="stat-item">
               <el-icon class="stat-icon" color="#E6A23C"><Warning /></el-icon>
@@ -59,7 +59,7 @@
             </div>
           </el-card>
         </el-col>
-        <el-col :span="6">
+        <el-col :xs="12" :sm="12" :md="6" :lg="6" :xl="6">
           <el-card class="stat-card">
             <div class="stat-item">
               <el-icon class="stat-icon" color="#F56C6C"><Warning /></el-icon>
@@ -72,7 +72,7 @@
         </el-col>
       </el-row>
       <el-row :gutter="20" style="margin-top: 20px;">
-        <el-col :span="6">
+        <el-col :xs="12" :sm="12" :md="6" :lg="6" :xl="6">
           <el-card class="stat-card">
             <div class="stat-item">
               <el-icon class="stat-icon" color="#909399"><Warning /></el-icon>
@@ -89,7 +89,7 @@
     <div class="quick-actions">
       <h3>快速操作</h3>
       <el-row :gutter="20">
-        <el-col :span="8">
+        <el-col :xs="24" :sm="12" :md="8" :lg="8" :xl="8">
           <el-card class="action-card" @click="$router.push('/user/profile')">
             <div class="action-item">
               <el-icon class="action-icon"><Setting /></el-icon>
@@ -101,7 +101,7 @@
           </el-card>
         </el-col>
 
-        <el-col :span="8">
+        <el-col :xs="24" :sm="12" :md="8" :lg="8" :xl="8">
           <el-card class="action-card" @click="$router.push('/user/logs')">
             <div class="action-item">
               <el-icon class="action-icon"><Document /></el-icon>
@@ -113,7 +113,7 @@
           </el-card>
         </el-col>
 
-        <el-col :span="8">
+        <el-col :xs="24" :sm="12" :md="8" :lg="8" :xl="8">
           <el-card class="action-card" @click="$router.push('/user/products/routes')">
             <div class="action-item">
               <el-icon class="action-icon"><ShoppingCart /></el-icon>
@@ -127,7 +127,7 @@
       </el-row>
 
       <el-row :gutter="20" style="margin-top: 20px;">
-        <el-col :span="8">
+        <el-col :xs="24" :sm="12" :md="8" :lg="8" :xl="8">
           <el-card class="action-card" @click="$router.push('/user/business/list')">
             <div class="action-item">
               <el-icon class="action-icon"><List /></el-icon>
@@ -139,7 +139,7 @@
           </el-card>
         </el-col>
 
-        <el-col :span="8">
+        <el-col :xs="24" :sm="12" :md="8" :lg="8" :xl="8">
           <el-card class="action-card" @click="$router.push('/user/recharge')">
             <div class="action-item">
               <el-icon class="action-icon"><CreditCard /></el-icon>
@@ -151,7 +151,7 @@
           </el-card>
         </el-col>
 
-        <el-col :span="8">
+        <el-col :xs="24" :sm="12" :md="8" :lg="8" :xl="8">
           <el-card class="action-card" @click="$router.push('/user/orders')">
             <div class="action-item">
               <el-icon class="action-icon"><Tickets /></el-icon>
@@ -170,7 +170,7 @@
       <h3>代理推广</h3>
       <el-row :gutter="20">
         <!-- 上级推荐人信息 -->
-        <el-col :span="12">
+        <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12">
           <el-card class="referrer-card">
             <template #header>
               <div class="card-header">
@@ -203,7 +203,7 @@
         </el-col>
         
         <!-- 我的推广数据 -->
-        <el-col :span="12">
+        <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12">
           <el-card class="promotion-card">
             <template #header>
               <div class="card-header">
@@ -213,13 +213,13 @@
             </template>
             <div class="promotion-stats">
               <el-row :gutter="16">
-                <el-col :span="12">
+                <el-col :xs="12" :sm="12" :md="12" :lg="12" :xl="12">
                   <div class="stat-box">
                     <div class="stat-number">{{ userStore.userInfo.myUserInfo?.today_num || 0 }}</div>
                     <div class="stat-label">今天注册数</div>
                   </div>
                 </el-col>
-                <el-col :span="12">
+                <el-col :xs="12" :sm="12" :md="12" :lg="12" :xl="12">
                   <div class="stat-box">
                     <div class="stat-number">{{ userStore.userInfo.myUserInfo?.month_num || 0 }}</div>
                     <div class="stat-label">本月注册数</div>
@@ -227,13 +227,13 @@
                 </el-col>
               </el-row>
               <el-row :gutter="16" style="margin-top: 15px;">
-                <el-col :span="12">
+                <el-col :xs="12" :sm="12" :md="12" :lg="12" :xl="12">
                   <div class="stat-box">
                     <div class="stat-number">{{ userStore.userInfo.myUserInfo?.year_num || 0 }}</div>
                     <div class="stat-label">本年注册数</div>
                   </div>
                 </el-col>
-                <el-col :span="12">
+                <el-col :xs="12" :sm="12" :md="12" :lg="12" :xl="12">
                   <div class="stat-box">
                     <div class="stat-number">{{ userStore.userInfo.myUserInfo?.total_num || 0 }}</div>
                     <div class="stat-label">总注册数</div>
@@ -696,42 +696,212 @@ onMounted(() => {
 
 @media (max-width: 768px) {
   .welcome-container {
-    padding: 6px 0;
+    padding: 6px 10px;
   }
   
-  .welcome-header .avatar-section {
-    flex-direction: column;
-    text-align: center;
-    gap: 15px;
+  .welcome-header {
+    margin-bottom: 20px;
+    
+    .avatar-section {
+      flex-direction: column;
+      text-align: center;
+      gap: 15px;
+      padding: 20px 15px;
+      
+      .user-info {
+        h2 {
+          font-size: 20px;
+        }
+        
+        .welcome-text {
+          font-size: 14px;
+        }
+        
+        .user-details {
+          justify-content: center;
+          
+          .el-tag {
+            font-size: 12px;
+          }
+        }
+      }
+    }
   }
   
-  .stats-section .el-col {
-    margin-bottom: 15px;
+  .stats-section {
+    margin-bottom: 20px;
+    
+    .el-row {
+      margin: 0 -5px !important;
+      
+      .el-col {
+        padding: 0 5px;
+        margin-bottom: 10px;
+        
+        &:nth-child(n+3) {
+          margin-top: 0;
+        }
+      }
+    }
+    
+    .stat-card {
+      .stat-item {
+        gap: 10px;
+        
+        .stat-icon {
+          font-size: 24px;
+        }
+        
+        .stat-content {
+          .stat-number {
+            font-size: 18px;
+          }
+          
+          .stat-label {
+            font-size: 12px;
+          }
+        }
+      }
+    }
   }
   
-  .quick-actions .el-col {
-    margin-bottom: 15px;
+  .quick-actions {
+    margin-bottom: 20px;
+    
+    h3 {
+      font-size: 16px;
+      margin-bottom: 15px;
+    }
+    
+    .el-row {
+      margin: 0 -5px !important;
+      
+      .el-col {
+        padding: 0 5px;
+        margin-bottom: 10px;
+      }
+    }
+    
+    .action-card {
+      .action-item {
+        gap: 10px;
+        
+        .action-icon {
+          font-size: 22px;
+        }
+        
+        .action-content {
+          .action-title {
+            font-size: 14px;
+          }
+          
+          .action-desc {
+            font-size: 12px;
+          }
+        }
+      }
+    }
+  }
+  
+  .referral-section {
+    margin-bottom: 20px;
+    
+    h3 {
+      font-size: 16px;
+      margin-bottom: 15px;
+    }
+    
+    .el-row {
+      margin: 0 -5px !important;
+      
+      .el-col {
+        padding: 0 5px;
+        margin-bottom: 15px;
+      }
+    }
+    
+    .referrer-card {
+      .referrer-info {
+        .info-item {
+          margin-bottom: 8px;
+          padding: 6px 0;
+          
+          .info-label {
+            min-width: 50px;
+            font-size: 13px;
+          }
+          
+          .info-value {
+            font-size: 13px;
+          }
+        }
+        
+        .no-referrer {
+          padding: 15px;
+          font-size: 13px;
+        }
+      }
+    }
+    
+    .promotion-card {
+      .promotion-stats {
+        .el-row {
+          margin: 0 -3px !important;
+          
+          .el-col {
+            padding: 0 3px;
+            margin-bottom: 8px;
+          }
+        }
+        
+        .stat-box {
+          padding: 10px 5px;
+          
+          .stat-number {
+            font-size: 18px;
+          }
+          
+          .stat-label {
+            font-size: 11px;
+          }
+        }
+      }
+    }
   }
   
   // 移动端公告弹窗适配
+  :deep(.el-dialog) {
+    width: 90% !important;
+    margin: 0 auto;
+  }
+  
+  .notice-content {
+    .notice-header {
+      .notice-title {
+        font-size: 18px;
+      }
+      
+      .notice-time {
+        font-size: 13px;
+      }
+    }
+    
+    .notice-body {
+      .notice-text {
+        font-size: 14px;
+      }
+    }
+  }
+  
   .notice-footer {
     flex-direction: column;
     gap: 15px;
     
     .notice-pagination {
       order: 2;
-    }
-  }
-  
-  // 移动端代理推广栏目适配
-  .referral-section {
-    .el-col {
-      margin-bottom: 15px;
-    }
-    
-    .promotion-stats {
-      .el-col {
-        margin-bottom: 10px;
+      
+      .pagination-info {
+        font-size: 13px;
       }
     }
   }
