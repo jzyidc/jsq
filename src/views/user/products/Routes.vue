@@ -286,98 +286,100 @@
         </template>
         
         <div class="summary-content">
-          <div class="summary-item">
-            <span class="item-label">选择项目：</span>
-            <span class="item-value">{{ selectedProduct }}</span>
-          </div>
-          
-          <div class="summary-item">
-            <span class="item-label">购买时长：</span>
-            <span class="item-value">{{ selectedDuration }}</span>
-          </div>
-          
-          <div class="summary-item assign-group-item">
-            <span class="item-label">分组：</span>
-            <el-input 
-              v-model="assignGroup" 
-              placeholder="0000-9999"
-              maxlength="4"
-              class="assign-group-input"
-              @input="validateAssignGroup"
-            />
-          </div>
-          
-          <el-divider />
-          
-          <div class="order-list">
-            <div class="list-header">已选线路：</div>
-            <div v-if="orderList.length === 0" class="empty-order">
-              <el-icon><Box /></el-icon>
-              <span>暂未选择任何线路</span>
+          <div class="summary-scrollable">
+            <div class="summary-item">
+              <span class="item-label">选择项目：</span>
+              <span class="item-value">{{ selectedProduct }}</span>
             </div>
-            <div v-else class="order-items">
-              <div v-for="item in orderList" :key="item.id" class="order-item">
-                <div class="order-info">
-                  <span class="order-name">{{ item.name }}</span>
-                  <div class="quantity-control">
-                    <span class="quantity-label">数量：</span>
-                    <el-input-number 
-                      v-model="item.quantity" 
-                      :min="1" 
-                      :max="getMaxSelectableQuantity(item.stock)" 
-                      size="small"
-                      class="quantity-input"
-                      @change="updateOrderQuantity(item)"
-                    />
+            
+            <div class="summary-item">
+              <span class="item-label">购买时长：</span>
+              <span class="item-value">{{ selectedDuration }}</span>
+            </div>
+            
+            <div class="summary-item assign-group-item">
+              <span class="item-label">分组：</span>
+              <el-input 
+                v-model="assignGroup" 
+                placeholder="0000-9999"
+                maxlength="4"
+                class="assign-group-input"
+                @input="validateAssignGroup"
+              />
+            </div>
+            
+            <el-divider />
+            
+            <div class="order-list">
+              <div class="list-header">已选线路：</div>
+              <div v-if="orderList.length === 0" class="empty-order">
+                <el-icon><Box /></el-icon>
+                <span>暂未选择任何线路</span>
+              </div>
+              <div v-else class="order-items">
+                <div v-for="item in orderList" :key="item.id" class="order-item">
+                  <div class="order-info">
+                    <span class="order-name">{{ item.name }}</span>
+                    <div class="quantity-control">
+                      <span class="quantity-label">数量：</span>
+                      <el-input-number 
+                        v-model="item.quantity" 
+                        :min="1" 
+                        :max="getMaxSelectableQuantity(item.stock)" 
+                        size="small"
+                        class="quantity-input"
+                        @change="updateOrderQuantity(item)"
+                      />
+                    </div>
                   </div>
-                </div>
-                <div class="order-actions">
-                  <span class="order-price">￥{{ (getPriceByDuration(item, selectedDuration) * item.quantity).toFixed(2) }}</span>
-                  <el-button 
-                    type="text" 
-                    size="small" 
-                    @click="removeFromOrder(item)"
-                    class="remove-btn"
-                  >
-                    <el-icon><Close /></el-icon>
-                  </el-button>
+                  <div class="order-actions">
+                    <span class="order-price">￥{{ (getPriceByDuration(item, selectedDuration) * item.quantity).toFixed(2) }}</span>
+                    <el-button 
+                      type="text" 
+                      size="small" 
+                      @click="removeFromOrder(item)"
+                      class="remove-btn"
+                    >
+                      <el-icon><Close /></el-icon>
+                    </el-button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
           
-          <el-divider />
-          
-          <div class="summary-total">
-            <div class="total-item">
-              <span class="total-label">总数量：</span>
-              <span class="total-value">{{ totalQuantity }} 个</span>
+          <div class="summary-footer">
+            <div class="summary-total">
+              <div class="total-item">
+                <span class="total-label">总数量：</span>
+                <span class="total-value">{{ totalQuantity }} 个</span>
+              </div>
+              <div class="total-item price-total">
+                <span class="total-label">需支付：</span>
+                <span class="total-price">￥{{ totalPrice.toFixed(2) }}</span>
+              </div>
             </div>
-            <div class="total-item price-total">
-              <span class="total-label">需支付：</span>
-              <span class="total-price">￥{{ totalPrice.toFixed(2) }}</span>
+            
+            <div class="balance-info">
+              <span class="balance-label">账户余额：</span>
+              <span class="balance-value">￥{{ (userStore.userInfo.balance || 0).toFixed(2) }}</span>
+              <el-link type="primary" :underline="false" class="recharge-link" @click="handleRecharge">
+                <el-icon><CreditCard /></el-icon>
+                去充值
+              </el-link>
             </div>
+            
+            <el-button 
+              type="primary" 
+              size="large"
+              class="pay-btn"
+              :disabled="orderList.length === 0"
+              @click="handlePayment"
+            >
+              <el-icon><Money /></el-icon>
+              立即支付
+            </el-button>
           </div>
-          
-          <div class="balance-info">
-            <span class="balance-label">账户余额：</span>
-            <span class="balance-value">￥{{ (userStore.userInfo.balance || 0).toFixed(2) }}</span>
-            <el-link type="primary" :underline="false" class="recharge-link" @click="handleRecharge">
-              <el-icon><CreditCard /></el-icon>
-              去充值
-            </el-link>
-          </div>
-          
-          <el-button 
-            type="primary" 
-            size="large"
-            class="pay-btn"
-            :disabled="orderList.length === 0"
-            @click="handlePayment"
-          >
-            <el-icon><Money /></el-icon>
-            立即支付
-          </el-button>
         </div>
       </el-card>
     </div>
@@ -1646,6 +1648,8 @@ onUnmounted(() => {
   width: 320px;
   z-index: 1000;
   transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  max-height: 80vh;
+  overflow-y: auto;
   
   &:hover {
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
@@ -1794,6 +1798,44 @@ onUnmounted(() => {
     }
     
     .summary-content {
+      display: flex;
+      flex-direction: column;
+      max-height: calc(80vh - 120px);
+      
+      .summary-scrollable {
+         flex: 1;
+         overflow-y: auto;
+         padding-right: 8px;
+         margin-right: -8px;
+         
+         // 自定义滚动条样式
+         &::-webkit-scrollbar {
+           width: 6px;
+         }
+         
+         &::-webkit-scrollbar-track {
+           background: #f1f1f1;
+           border-radius: 3px;
+         }
+         
+         &::-webkit-scrollbar-thumb {
+           background: #c1c1c1;
+           border-radius: 3px;
+           
+           &:hover {
+             background: #a8a8a8;
+           }
+         }
+       }
+      
+      .summary-footer {
+        flex-shrink: 0;
+        border-top: 1px solid #f0f0f0;
+        padding-top: 16px;
+        margin-top: 16px;
+        background: white;
+      }
+      
       .summary-item {
         display: flex;
         justify-content: space-between;
@@ -2008,6 +2050,16 @@ onUnmounted(() => {
     transform: none;
     width: 100%;
     margin-top: 20px;
+    max-height: none;
+    
+    .summary-content {
+      max-height: none;
+      
+      .summary-scrollable {
+        max-height: 400px;
+        overflow-y: auto;
+      }
+    }
     
     &.order-summary-hidden {
       right: auto;

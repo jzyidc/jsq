@@ -236,6 +236,10 @@
                     <el-icon><Key /></el-icon>
                     设置密码
                   </el-dropdown-item>
+                  <el-dropdown-item command="orderLog">
+                    <el-icon><Document /></el-icon>
+                    订单日志
+                  </el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
@@ -742,6 +746,120 @@
         </div>
       </template>
     </el-dialog>
+    
+    <!-- 订单日志对话框 -->
+    <el-dialog
+      v-model="orderLogDialog.visible"
+      width="900px"
+      :close-on-click-modal="false"
+      class="order-log-dialog"
+      align-center
+    >
+      <template #header>
+        <div class="dialog-header">
+          <el-icon class="dialog-icon"><Document /></el-icon>
+          <span class="dialog-title">订单日志</span>
+        </div>
+      </template>
+      
+      <div class="dialog-content">
+        <!-- 当前节点信息 -->
+        <div class="current-node-section">
+          <h4 class="section-title">
+            <el-icon><Monitor /></el-icon>
+            节点信息
+          </h4>
+          <div class="current-node-info">
+            <div class="node-item">
+              <el-icon><VideoPlay /></el-icon>
+              <span class="label">游戏:</span>
+              <span class="value">{{ orderLogDialog.currentNode?.Game }}</span>
+            </div>
+            <div class="node-item">
+              <el-icon><Location /></el-icon>
+              <span class="label">区域:</span>
+              <span class="value">{{ orderLogDialog.currentNode?.Area }}</span>
+            </div>
+            <div class="node-item">
+              <el-icon><Connection /></el-icon>
+              <span class="label">节点IP:</span>
+              <span class="value">{{ orderLogDialog.currentNode?.IpAddress }}</span>
+            </div>
+            <div class="node-item">
+              <el-icon><Timer /></el-icon>
+              <span class="label">到期时间:</span>
+              <span class="value expire-time">{{ orderLogDialog.currentNode?.EndTime }}</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 订单日志表格 -->
+        <div class="order-log-section">
+          <h4 class="section-title">
+            <el-icon><List /></el-icon>
+            订单记录
+          </h4>
+          <el-table
+            :data="orderLogDialog.tableData"
+            v-loading="orderLogDialog.loading"
+            stripe
+            style="width: 100%"
+            max-height="400px"
+          >
+            <el-table-column prop="id" label="订单ID" width="120" />
+            <el-table-column prop="type" label="类型" width="80">
+              <template #default="{ row }">
+                <el-tag
+                  :type="row.type === '购买' ? 'success' : row.type === '续费' ? 'warning' : 'info'"
+                  size="small"
+                >
+                  {{ row.type }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="describe" label="描述" width="120" />
+            <el-table-column prop="time" label="操作时间" width="160" />
+            <el-table-column prop="ip" label="IP地址" width="120" />
+            <el-table-column prop="game" label="游戏" min-width="140" />
+            <el-table-column prop="area" label="区域" width="100" />
+            <el-table-column prop="start_time" label="开始时间" width="160" />
+            <el-table-column prop="end_time" label="结束时间" width="160" />
+            <el-table-column prop="amount" label="金额变动" width="100">
+              <template #default="{ row }">
+                <el-tag
+                  :type="getAmountType(row.amount)"
+                  size="small"
+                >
+                  {{ parseFloat(row.amount) > 0 ? '+' : '' }}{{ parseFloat(row.amount).toFixed(2) }}
+                </el-tag>
+              </template>
+            </el-table-column>
+          </el-table>
+          
+          <!-- 分页 -->
+          <div class="pagination-wrapper" style="margin-top: 16px;">
+            <el-pagination
+              v-model:current-page="orderLogDialog.pagination.page"
+              v-model:page-size="orderLogDialog.pagination.size"
+              :page-sizes="[10, 20, 50]"
+              :total="orderLogDialog.pagination.total"
+              layout="total, sizes, prev, pager, next, jumper"
+              @size-change="handleOrderLogSizeChange"
+              @current-change="handleOrderLogPageChange"
+            />
+          </div>
+        </div>
+      </div>
+      
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button size="large" @click="orderLogDialog.visible = false">
+            <el-icon><Close /></el-icon>
+            关闭
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -755,6 +873,7 @@ import {
 } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import { getNodeData, setGroup, getGameData, getAreaData, switchNode, renewNode, setNodePassword, getNodeRenewPrice } from '@/api/auth'
+import { getNodeOrder } from '@/api/finance'
 
 // 路由
 const router = useRouter()
@@ -902,6 +1021,19 @@ const exportDialog = reactive({
 })
 
 const exportFormRef = ref()
+
+// 订单日志对话框
+const orderLogDialog = reactive({
+  visible: false,
+  loading: false,
+  currentNode: null,
+  tableData: [],
+  pagination: {
+    page: 1,
+    size: 20,
+    total: 0
+  }
+})
 
 // 获取剩余天数类型
 const getDaysType = (days) => {
@@ -1111,6 +1243,9 @@ const handleMoreAction = (command, row) => {
       break
     case 'setPassword':
       handleSetPassword(row)
+      break
+    case 'orderLog':
+      handleOrderLog(row)
       break
     default:
       console.warn('未知的操作命令:', command)
@@ -1793,6 +1928,69 @@ const generateCopyContent = (rows, format) => {
   return lines.join('\n')
 }
 
+// 处理订单日志
+const handleOrderLog = (row) => {
+  orderLogDialog.currentNode = row
+  orderLogDialog.pagination.page = 1
+  orderLogDialog.visible = true
+  fetchOrderLogData()
+}
+
+// 获取订单日志数据
+const fetchOrderLogData = async () => {
+  orderLogDialog.loading = true
+  try {
+    const params = {
+      soldId: orderLogDialog.currentNode.Id,
+      page: orderLogDialog.pagination.page,
+      pageSize: orderLogDialog.pagination.size
+    }
+    
+    const response = await getNodeOrder(params)
+    
+    if (response.Code === 1000) {
+      orderLogDialog.tableData = response.List || []
+      orderLogDialog.pagination.total = response.RowCount || 0
+    } else {
+      ElMessage.error(response.Msg || '获取订单日志失败')
+      orderLogDialog.tableData = []
+      orderLogDialog.pagination.total = 0
+    }
+  } catch (error) {
+    console.error('获取订单日志失败:', error)
+    ElMessage.error('获取订单日志失败')
+    orderLogDialog.tableData = []
+    orderLogDialog.pagination.total = 0
+  } finally {
+    orderLogDialog.loading = false
+  }
+}
+
+// 订单日志分页处理
+const handleOrderLogPageChange = (page) => {
+  orderLogDialog.pagination.page = page
+  fetchOrderLogData()
+}
+
+// 订单日志页面大小变化处理
+const handleOrderLogSizeChange = (size) => {
+  orderLogDialog.pagination.size = size
+  orderLogDialog.pagination.page = 1
+  fetchOrderLogData()
+}
+
+// 获取金额类型样式
+const getAmountType = (amount) => {
+  const num = parseFloat(amount)
+  if (num > 0) {
+    return 'success' // 收入
+  } else if (num < 0) {
+    return 'danger' // 支出
+  } else {
+    return 'info' // 无变化
+  }
+}
+
 // 初始化
 onMounted(() => {
   fetchData()
@@ -1847,7 +2045,8 @@ onMounted(() => {
 
 // 对话框美化样式
 :deep(.switch-node-dialog),
-:deep(.renew-dialog) {
+:deep(.renew-dialog),
+:deep(.order-log-dialog) {
   .el-dialog__header {
     padding: 20px 24px 0;
     border-bottom: none;
@@ -2232,6 +2431,38 @@ onMounted(() => {
         text-align: left;
       }
     }
+  }
+}
+
+// 订单日志对话框特定样式
+.order-log-section {
+  margin-top: 24px;
+  
+  .el-table {
+    border-radius: 8px;
+    overflow: hidden;
+    
+    :deep(.el-table__header) {
+      background-color: #f8f9fa;
+      
+      th {
+        background-color: #f8f9fa !important;
+        color: #495057;
+        font-weight: 600;
+      }
+    }
+    
+    :deep(.el-table__row) {
+      &:hover {
+        background-color: #f8f9fa;
+      }
+    }
+  }
+  
+  .pagination-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-top: 16px;
   }
 }
 </style>

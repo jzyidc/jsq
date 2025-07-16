@@ -51,6 +51,14 @@
                <span class="info-value">{{ userInfo.ipAddress || '--' }}</span>
              </div>
              <div class="info-item">
+               <span class="info-label">QQ：</span>
+               <span class="info-value">{{ userInfo.qq || '--' }}</span>
+             </div>
+             <div class="info-item">
+               <span class="info-label">微信：</span>
+               <span class="info-value">{{ userInfo.wx || '--' }}</span>
+             </div>
+             <div class="info-item">
                <span class="info-label">实名认证：</span>
                <div class="auth-status">
                  <el-tag :type="isAuthenticated ? 'success' : 'warning'" size="small">
@@ -77,25 +85,40 @@
           <template #header>
             <div class="card-header">
               <span>个人信息</span>
+              <div class="header-actions">
+                <el-button 
+                  v-if="!isEditing" 
+                  type="primary" 
+                  size="small" 
+                  @click="startEdit"
+                >
+                  编辑资料
+                </el-button>
+                <div v-else class="edit-actions">
+                  <el-button size="small" @click="cancelEdit">取消</el-button>
+                  <el-button type="primary" size="small" @click="saveProfile" :loading="saveLoading">保存</el-button>
+                </div>
+              </div>
             </div>
           </template>
           
           <el-form
+            ref="profileFormRef"
             :model="profileForm"
+            :rules="profileRules"
             label-width="100px"
-            :disabled="true"
             class="profile-form"
           >
             <el-row :gutter="20">
               <el-col :xs="24" :md="12">
                 <el-form-item label="用户名" prop="username">
-                  <el-input v-model="profileForm.username" placeholder="请输入用户名" />
+                  <el-input v-model="profileForm.username" placeholder="请输入用户名" :disabled="true" />
                 </el-form-item>
               </el-col>
               
               <el-col :xs="24" :md="12">
                 <el-form-item label="真实姓名" prop="real_name">
-                  <el-input v-model="profileForm.real_name" placeholder="请输入真实姓名" />
+                  <el-input v-model="profileForm.real_name" placeholder="请输入真实姓名" :disabled="true" />
                 </el-form-item>
               </el-col>
             </el-row>
@@ -104,6 +127,20 @@
               <el-col :xs="24" :md="12">
                 <el-form-item label="手机号" prop="phone">
                   <el-input v-model="profileForm.phone" placeholder="请输入手机号" :disabled="true" />
+                </el-form-item>
+              </el-col>
+              
+              <el-col :xs="24" :md="12">
+                <el-form-item label="QQ" prop="qq">
+                  <el-input v-model="profileForm.qq" placeholder="请输入QQ号" :disabled="!isEditing" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+            
+            <el-row :gutter="20">
+              <el-col :xs="24" :md="12">
+                <el-form-item label="微信" prop="wx">
+                  <el-input v-model="profileForm.wx" placeholder="请输入微信号" :disabled="!isEditing" />
                 </el-form-item>
               </el-col>
             </el-row>
@@ -225,7 +262,7 @@
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useUserStore } from '@/store/user'
 import { ElMessage } from 'element-plus'
-import { detectAuth, getDetectAuth } from '@/api/auth'
+import { detectAuth, getDetectAuth, setContactInformation } from '@/api/auth'
 import QRCode from 'qrcode'
 
 const userStore = useUserStore()
@@ -298,13 +335,33 @@ const authRules = {
 
 // 移除stats变量，直接使用userInfo中的数据
 
+// 编辑状态相关
+const isEditing = ref(false)
+const saveLoading = ref(false)
+const profileFormRef = ref()
+
 // 个人资料表单
 const profileForm = reactive({
   username: '',
   phone: '',
   real_name: '',
-  ipAddress: ''
+  ipAddress: '',
+  qq: '',
+  wx: ''
 })
+
+// 原始表单数据（用于取消编辑时恢复）
+const originalFormData = reactive({})
+
+// 表单验证规则
+const profileRules = {
+  qq: [
+    { pattern: /^[1-9][0-9]{4,10}$/, message: '请输入正确的QQ号', trigger: 'blur' }
+  ],
+  wx: [
+    { min: 1, max: 20, message: '微信号长度在 1 到 20 个字符', trigger: 'blur' }
+  ]
+}
 
 
 
@@ -443,13 +500,65 @@ const submitAuth = async () => {
 
 
 
+// 开始编辑
+const startEdit = () => {
+  isEditing.value = true
+  // 保存原始数据
+  Object.assign(originalFormData, {
+    qq: profileForm.qq,
+    wx: profileForm.wx
+  })
+}
+
+// 取消编辑
+const cancelEdit = () => {
+  isEditing.value = false
+  // 恢复原始数据
+  profileForm.qq = originalFormData.qq
+  profileForm.wx = originalFormData.wx
+}
+
+// 保存资料
+const saveProfile = async () => {
+  if (!profileFormRef.value) return
+  
+  try {
+    await profileFormRef.value.validate()
+    saveLoading.value = true
+    
+    const response = await setContactInformation({
+      qq: profileForm.qq || '',
+      wx: profileForm.wx || ''
+    })
+    
+    if (response.Code === 1000) {
+      ElMessage.success(response.Msg || '设置成功')
+      // 更新用户信息
+      userStore.updateUserInfo({
+        qq: profileForm.qq,
+        wx: profileForm.wx
+      })
+      isEditing.value = false
+    } else {
+      ElMessage.error(response.Msg || '保存失败')
+    }
+  } catch (error) {
+    console.error('保存联系信息失败:', error)
+    ElMessage.error('保存失败，请检查网络连接')
+  } finally {
+    saveLoading.value = false
+  }
+}
+
 // 初始化表单数据
 const initFormData = () => {
   Object.assign(profileForm, {
     username: userInfo.value.username || '',
     real_name: userInfo.value.realName || '',
     phone: userInfo.value.phone || '',
-    ipAddress: userInfo.value.ipAddress || ''
+    ipAddress: userInfo.value.ipAddress || '',
+    qq: userInfo.value.qq || '',
+    wx: userInfo.value.wx || ''
   })
 }
 
@@ -588,6 +697,13 @@ onUnmounted(() => {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      
+      .header-actions {
+        .edit-actions {
+          display: flex;
+          gap: 8px;
+        }
+      }
     }
     
     .profile-form {

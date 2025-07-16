@@ -291,3 +291,44 @@ export const getSettlementOrder = (params = {}) => {
     }
   })
 }
+
+/**
+ * 获取节点订单日志
+ * @param {Object} params - 查询参数
+ * @param {string} params.soldId - 节点ID
+ * @param {number|string} [params.page] - 页码，默认第1页
+ * @param {number|string} [params.pageSize] - 每页条数，默认20条
+ * @returns {Promise<{
+ *   Code: number,
+ *   Msg: string,
+ *   NowPage: number,
+ *   PageSize: number,
+ *   RowCount: number,
+ *   PageCount: number,
+ *   List: Array<{
+ *     id: string,
+ *     type: string,
+ *     describe: string,
+ *     time: string,
+ *     sold_id: string,
+ *     ip: string,
+ *     game: string,
+ *     area: string,
+ *     start_time: string,
+ *     end_time: string,
+ *     amount: string
+ *   }>
+ * }>} 节点订单日志数据
+ */
+export const getNodeOrder = (params = {}) => {
+  return request({
+    url: '',
+    method: 'post',
+    data: {
+      Action: 'GetNodeOrder',
+      SoldId: params.soldId,
+      Page: params.page || 1,
+      PageSize: params.pageSize || 20
+    }
+  })
+}

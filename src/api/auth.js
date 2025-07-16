@@ -420,3 +420,16 @@ export const getPromotionInfo = () => {
     }
   })
 }
+
+// 设置联系信息
+export const setContactInformation = (data) => {
+  return request({
+    url: '',
+    method: 'post',
+    data: {
+      Action: 'SetContactInformation',
+      qq: data.qq,
+      wx: data.wx
+    }
+  })
+}
