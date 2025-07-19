@@ -380,7 +380,7 @@ const handleSetDiscount = async () => {
     
     // 这里可以添加检查折扣值是否低于代理折扣值的逻辑
     // 假设代理折扣值为0.8，可以根据实际情况调整
-    const agentDiscount = 0.8 // 这个值应该从用户信息或配置中获取
+    const agentDiscount = 0.1 // 这个值应该从用户信息或配置中获取
     if (discountForm.discount < agentDiscount) {
       ElMessage.warning(`折扣值不能低于代理折扣值 ${agentDiscount}`)
       return

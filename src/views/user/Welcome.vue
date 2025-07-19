@@ -43,17 +43,6 @@
         <el-col :xs="12" :sm="12" :md="6" :lg="6" :xl="6">
           <el-card class="stat-card">
             <div class="stat-item">
-              <el-icon class="stat-icon" color="#67C23A"><Money /></el-icon>
-              <div class="stat-content">
-                <div class="stat-number">¥{{ formatBalance(userStore.userInfo.balance) }}</div>
-                <div class="stat-label">账户余额</div>
-              </div>
-            </div>
-          </el-card>
-        </el-col>
-        <el-col :xs="12" :sm="12" :md="6" :lg="6" :xl="6">
-          <el-card class="stat-card">
-            <div class="stat-item">
               <el-icon class="stat-icon" color="#409EFF"><Monitor /></el-icon>
               <div class="stat-content">
                 <div class="stat-number">{{ userStore.userInfo.nodeInfo?.total_num || 0 }}</div>
@@ -84,8 +73,6 @@
             </div>
           </el-card>
         </el-col>
-      </el-row>
-      <el-row :gutter="20" style="margin-top: 20px;">
         <el-col :xs="12" :sm="12" :md="6" :lg="6" :xl="6">
           <el-card class="stat-card">
             <div class="stat-item">
@@ -97,6 +84,8 @@
             </div>
           </el-card>
         </el-col>
+      </el-row>
+      <el-row :gutter="20" style="margin-top: 20px;">
         <el-col :xs="12" :sm="12" :md="6" :lg="6" :xl="6">
           <el-card class="stat-card">
             <div class="stat-item">
@@ -111,10 +100,32 @@
         <el-col :xs="12" :sm="12" :md="6" :lg="6" :xl="6">
           <el-card class="stat-card">
             <div class="stat-item">
+              <el-icon class="stat-icon" color="#67C23A"><Money /></el-icon>
+              <div class="stat-content">
+                <div class="stat-number">¥{{ formatBalance(userStore.userInfo.balance) }}</div>
+                <div class="stat-label">账户余额</div>
+              </div>
+            </div>
+          </el-card>
+        </el-col>
+        <el-col :xs="12" :sm="12" :md="6" :lg="6" :xl="6">
+          <el-card class="stat-card">
+            <div class="stat-item">
               <el-icon class="stat-icon" color="#E6A23C"><Star /></el-icon>
               <div class="stat-content">
                 <div class="stat-number">¥{{ formatBalance(userStore.userInfo.total_commission_amount) }}</div>
                 <div class="stat-label">总佣金金额</div>
+              </div>
+            </div>
+          </el-card>
+        </el-col>
+        <el-col :xs="12" :sm="12" :md="6" :lg="6" :xl="6">
+          <el-card class="stat-card">
+            <div class="stat-item">
+              <el-icon class="stat-icon" color="#F56C6C"><Discount /></el-icon>
+              <div class="stat-content">
+                <div class="stat-number">{{ userStore.userInfo.Discount || '0%' }}</div>
+                <div class="stat-label">折扣</div>
               </div>
             </div>
           </el-card>
@@ -364,7 +375,8 @@ import {
   ChatDotRound,
   ChatLineRound,
   InfoFilled,
-  TrendCharts
+  TrendCharts,
+  Discount
 } from '@element-plus/icons-vue'
 
 const userStore = useUserStore()

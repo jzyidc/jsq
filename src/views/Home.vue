@@ -6,7 +6,7 @@
         <div class="loader-logo">
           <img src="/logo.svg" alt="Logo" />
         </div>
-        <div class="loader-text">XXX管理系统</div>
+        <div class="loader-text">万维加速器</div>
         <div class="loader-progress">
           <div class="progress-bar"></div>
         </div>
@@ -31,7 +31,7 @@
       <div class="nav-content">
         <div class="nav-left">
           <img src="/logo.svg" alt="Logo" class="nav-logo" />
-          <span class="nav-title">XXX管理系统</span>
+          <span class="nav-title">万维加速器</span>
         </div>
         
         <!-- 中间导航菜单 -->
@@ -55,7 +55,7 @@
         <div class="nav-right">
           <!-- 未登录状态 -->
           <template v-if="!userStore.isLoggedIn">
-            <el-button text @click="$router.push('/register')">立即注册</el-button>
+            <el-button link @click="$router.push('/register')">立即注册</el-button>
             <el-button type="primary" @click="$router.push('/login')">登录</el-button>
           </template>
           
@@ -344,11 +344,12 @@
         <div class="footer-section">
           <h4>联系方式</h4>
           <p>客服时间：09:00 - 24:00</p>
-          <p>客服QQ：800083637</p>
+          <p>客服QQ：314501210</p>
         </div>
       </div>
       <div class="footer-bottom">
-        <p>Copyright © 2020-2023 XXX管理系统. All Rights Reserved.</p>
+        <p>Copyright © 2025 万维&风谷网络 All Rights Reserved.</p>
+        <p><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">豫ICP备2025121346号-1</a></p>
       </div>
     </footer>
 
@@ -420,7 +421,7 @@ const userStore = useUserStore()
 const router = useRouter()
 
 // 设置页面标题
-document.title = 'XXX管理系统 - 首页'
+document.title = '万维加速器 - 首页'
 
 // 幻灯片相关数据和逻辑
 const currentSlide = ref(0)

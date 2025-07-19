@@ -42,6 +42,10 @@
             <el-icon><Document /></el-icon>
             <template #title>充值记录</template>
           </el-menu-item>
+          <el-menu-item index="/user/orders">
+            <el-icon><Document /></el-icon>
+            <template #title>订单列表</template>
+          </el-menu-item>
         </el-sub-menu>
         
         <el-sub-menu index="products">
@@ -68,9 +72,9 @@
             <el-icon><Warning /></el-icon>
             <template #title>过期业务</template>
           </el-menu-item>
-          <el-menu-item index="/user/orders">
+          <el-menu-item index="/user/business/order-log">
             <el-icon><Document /></el-icon>
-            <template #title>订单列表</template>
+            <template #title>订单日志</template>
           </el-menu-item>
         </el-sub-menu>
         
@@ -125,7 +129,7 @@
       <el-header class="header">
         <div class="header-left">
           <el-button
-            type="text"
+            link
             @click="toggleCollapse"
             class="collapse-btn"
           >
@@ -142,7 +146,7 @@
         
         <div class="header-right">
           <!-- 快捷操作 -->
-          <el-button type="text" @click="$router.push('/admin')" v-if="userStore.isAdmin">
+          <el-button link @click="$router.push('/admin')" v-if="userStore.isAdmin">
             <el-icon><Setting /></el-icon>
             管理后台
           </el-button>
@@ -279,6 +283,9 @@ const breadcrumbItems = computed(() => {
       break
     case '/user/business/expired':
       items.push('业务管理', '过期业务')
+      break
+    case '/user/business/order-log':
+      items.push('业务管理', '订单日志')
       break
     case '/user/orders':
       items.push('订单列表')

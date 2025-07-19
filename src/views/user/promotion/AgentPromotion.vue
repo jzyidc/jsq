@@ -339,8 +339,8 @@ const fetchPromotionLink = async () => {
     
     // 使用真正的用户信息生成推广链接
     const userStore = useUserStore()
-    const userPhone = userStore.userInfo.phone || 'USER'
-    promotionLink.value = `${window.location.origin}/register?ref=${userPhone}`
+    const userId = userStore.userInfo.id || 'USER'
+    promotionLink.value = `${window.location.origin}/register?ref=${userId}`
   } catch (error) {
     ElMessage.error('获取推广链接失败')
   }

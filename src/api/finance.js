@@ -95,19 +95,54 @@ export const getPayOptions = () => {
   })
 }
 
-// 获取订单数据
+/**
+ * 获取订单数据
+ * @param {Object} params - 查询参数
+ * @param {string} [params.screenId] - 筛选指定节点ID
+ * @param {string} [params.screenIp] - 筛选指定节点IP地址
+ * @param {string} [params.screenOrderNumber] - 筛选指定关联订单号
+ * @param {string} [params.screenType] - 类型筛选：购买/续费/切换/暂停/退订/过期/冻结
+ * @param {string} [params.screenStartTime] - 筛选开始时间，格式:2023-01-01 00:00:00
+ * @param {string} [params.screenEndTime] - 筛选结束时间，格式:2023-01-31 23:59:59
+ * @param {number|string} [params.page] - 页码，默认第1页
+ * @param {number|string} [params.pageSize] - 每页条数，默认20条
+ * @returns {Promise} 订单数据
+ */
+/**
+ * 获取财务订单数据
+ * @param {Object} params - 查询参数
+ * @param {string} [params.orderNumber] - 订单号筛选
+ * @param {string} [params.type] - 订单类型筛选
+ * @param {string} [params.startDate] - 开始日期 (格式: YYYY-MM-DD)
+ * @param {string} [params.endDate] - 结束日期 (格式: YYYY-MM-DD)
+ * @param {number|string} [params.page] - 页码，默认第1页
+ * @param {number|string} [params.pageSize] - 每页条数，默认20条
+ * @returns {Promise} 财务订单列表
+ */
 export const getOrderData = (params = {}) => {
+  // 处理日期格式，将 YYYY-MM-DD 转换为 YYYY-MM-DD HH:mm:ss
+  let startTime = ''
+  let endTime = ''
+  
+  if (params.startDate) {
+    startTime = `${params.startDate} 00:00:00`
+  }
+  
+  if (params.endDate) {
+    endTime = `${params.endDate} 23:59:59`
+  }
+  
   return request({
     url: '',
     method: 'post',
     data: {
       Action: 'GetFinanceOrder',
-      Page: params.page || 1,
-      PageNumber: params.pageSize || 20,
       ScreenOrderNumber: params.orderNumber || '',
       ScreenType: params.type || '',
-      ScreenStartTime: params.startDate ? `${params.startDate} 00:00:00` : '',
-      ScreenEndTime: params.endDate ? `${params.endDate} 23:59:59` : ''
+      ScreenStartTime: startTime,
+      ScreenEndTime: endTime,
+      Page: params.page || 1,
+      PageSize: params.pageSize || 20
     }
   })
 }
@@ -295,7 +330,12 @@ export const getSettlementOrder = (params = {}) => {
 /**
  * 获取节点订单日志
  * @param {Object} params - 查询参数
- * @param {string} params.soldId - 节点ID
+ * @param {string} [params.screenId] - 节点ID
+ * @param {string} [params.screenIp] - 节点IP地址
+ * @param {string} [params.screenOrderNumber] - 订单号
+ * @param {string} [params.screenType] - 订单类型
+ * @param {string} [params.screenStartTime] - 开始时间
+ * @param {string} [params.screenEndTime] - 结束时间
  * @param {number|string} [params.page] - 页码，默认第1页
  * @param {number|string} [params.pageSize] - 每页条数，默认20条
  * @returns {Promise<{
@@ -326,9 +366,14 @@ export const getNodeOrder = (params = {}) => {
     method: 'post',
     data: {
       Action: 'GetNodeOrder',
-      SoldId: params.soldId,
-      Page: params.page || 1,
-      PageSize: params.pageSize || 20
+      ScreenId: params.screenId || '',
+      ScreenIp: params.screenIp || '',
+      ScreenOrderNumber: params.screenOrderNumber || '',
+      ScreenType: params.screenType || '',
+      ScreenStartTime: params.screenStartTime || '',
+      ScreenEndTime: params.screenEndTime || '',
+      Page: params.page || '',
+      PageSize: params.pageSize || ''
     }
   })
 }

@@ -12,11 +12,11 @@
         </div>
         <div class="stats-info">
           <div class="stat-item">
-            <span class="stat-number">{{ filteredNodes.length }}</span>
+            <span class="stat-number">{{ filteredNodes?.length || 0 }}</span>
             <span class="stat-label">可用节点</span>
           </div>
           <div class="stat-item">
-            <span class="stat-number">{{ orderList.length }}</span>
+            <span class="stat-number">{{ orderList?.length || 0 }}</span>
             <span class="stat-label">已选择</span>
           </div>
         </div>
@@ -36,7 +36,7 @@
             
             <div class="region-buttons-vertical">
               <el-button 
-                v-for="item in regions" 
+                v-for="item in (regions || [])" 
                 :key="item" 
                 :type="selectedRegion === item ? 'primary' : 'default'" 
                 :class="{ 'region-active': selectedRegion === item }"
@@ -54,111 +54,152 @@
         
         <!-- 右侧主要内容 -->
         <div class="right-content">
-          <!-- 筛选器卡片 -->
-          <el-card class="filter-card" shadow="hover">
-            <template #header>
-              <div class="card-header">
-                <el-icon><Filter /></el-icon>
-                <span>筛选条件</span>
+          <!-- 筛选条件和智能分配左右布局 -->
+          <div class="filter-assign-layout">
+            <!-- 左侧筛选器卡片 -->
+            <el-card class="filter-card" shadow="hover">
+              <template #header>
+                <div class="card-header">
+                  <el-icon><Filter /></el-icon>
+                  <span>筛选条件</span>
+                </div>
+              </template>
+              
+              <!-- 主要筛选条件 -->
+              <div class="filter-section">
+                <el-row :gutter="20">
+                  <el-col :span="8">
+                    <div class="filter-item">
+                      <label class="filter-label">游戏首字母 <span style="color: #909399; font-size: 12px;">(支持搜索)</span></label>
+                      <el-select 
+                        v-model="selectedGameType" 
+                        class="filter-select" 
+                        placeholder="请选择首字母或输入关键词搜索"
+                        filterable
+                        remote
+                        :remote-method="searchGameTypes"
+                        :loading="gameTypeSearchLoading"
+                        @change="handleGameTypeChange"
+                        @focus="handleGameTypeSelectFocus"
+                      >
+                        <template #prefix>
+                          <el-icon><Search /></el-icon>
+                        </template>
+                        <el-option v-for="item in filteredGameTypeList" :key="item.value" :label="item.label" :value="item.value" />
+                      </el-select>
+                    </div>
+                  </el-col>
+                  <el-col :span="8">
+                    <div class="filter-item">
+                      <label class="filter-label">购买项目 <span style="color: #909399; font-size: 12px;">(支持搜索)</span></label>
+                      <el-select 
+                        v-model="selectedProduct" 
+                        class="filter-select" 
+                        placeholder="请选择游戏或输入关键词搜索" 
+                        filterable
+                        remote
+                        :remote-method="searchGames"
+                        :loading="gameSearchLoading"
+                        @change="handleProductChange"
+                        @focus="handleGameSelectFocus"
+                      >
+                        <template #prefix>
+                          <el-icon><Search /></el-icon>
+                        </template>
+                        <el-option v-for="item in (filteredGameList || [])" :key="item.Id" :label="item.Game" :value="item.Game" />
+                      </el-select>
+                    </div>
+                  </el-col>
+                  <el-col :span="8">
+                    <div class="filter-item">
+                      <label class="filter-label">购买时长</label>
+                      <el-select v-model="selectedDuration" class="filter-select">
+                        <el-option v-for="item in (durations || [])" :key="item" :label="item" :value="item" />
+                      </el-select>
+                    </div>
+                  </el-col>
+                </el-row>
               </div>
-            </template>
-            
-            <!-- 主要筛选条件 -->
-            <div class="filter-section">
-              <el-row :gutter="20">
-                <el-col :span="8">
-                  <div class="filter-item">
-                    <label class="filter-label">游戏类型</label>
-                    <el-select v-model="selectedGameType" class="filter-select" @change="handleGameTypeChange">
-                      <el-option label="全部" value="" />
-                      <el-option label="端游" value="1" />
-                      <el-option label="手游" value="2" />
-                    </el-select>
-                  </div>
-                </el-col>
-                <el-col :span="8">
-                  <div class="filter-item">
-                    <label class="filter-label">购买项目</label>
-                    <el-select v-model="selectedProduct" class="filter-select" placeholder="请选择游戏" @change="handleProductChange">
-                      <el-option v-for="item in gameList" :key="item.Id" :label="item.Game" :value="item.Game" />
-                    </el-select>
-                  </div>
-                </el-col>
-                <el-col :span="8">
-                  <div class="filter-item">
-                    <label class="filter-label">购买时长</label>
-                    <el-select v-model="selectedDuration" class="filter-select">
-                      <el-option v-for="item in durations" :key="item" :label="item" :value="item" />
-                    </el-select>
-                  </div>
-                </el-col>
-              </el-row>
-            </div>
-            
-            <!-- 高级筛选条件 -->
-            <el-divider><el-icon><Setting /></el-icon>高级筛选</el-divider>
-            <div class="filter-section">
-              <el-row :gutter="20">
-                <el-col :span="12">
-                  <div class="filter-item">
-                    <label class="filter-label">运营商</label>
-                    <el-radio-group v-model="selectedOperator" class="filter-radio">
-                      <el-radio-button v-for="item in operators" :key="item" :label="item" />
-                    </el-radio-group>
-                  </div>
-                </el-col>
-                <el-col :span="12">
-                  <div class="filter-item">
-                    <label class="filter-label">线路类型</label>
-                    <el-radio-group v-model="selectedLineType" class="filter-radio">
-                       <el-radio-button v-for="item in lineTypes" :key="item" :label="item" />
-                     </el-radio-group>
-                  </div>
-                </el-col>
-              </el-row>
-            </div>
-          </el-card>
+              
+              <!-- 高级筛选条件 -->
+              <el-divider><el-icon><Setting /></el-icon>高级筛选</el-divider>
+              <div class="filter-section">
+                <el-row :gutter="20">
+                  <el-col :span="12">
+                    <div class="filter-item">
+                      <label class="filter-label">运营商</label>
+                      <el-radio-group v-model="selectedOperator" class="filter-radio">
+                        <el-radio-button v-for="item in (operators || [])" :key="item" :value="item">{{ item }}</el-radio-button>
+                      </el-radio-group>
+                    </div>
+                  </el-col>
+                  <el-col :span="12">
+                    <div class="filter-item">
+                      <label class="filter-label">线路类型</label>
+                      <el-radio-group v-model="selectedLineType" class="filter-radio">
+                         <el-radio-button v-for="item in (lineTypes || [])" :key="item" :value="item">{{ item }}</el-radio-button>
+                       </el-radio-group>
+                    </div>
+                  </el-col>
+                </el-row>
+              </div>
+            </el-card>
 
-          <!-- 节点分配卡片 -->
-          <el-card class="assign-card" shadow="hover">
-            <template #header>
-              <div class="card-header">
-                <el-icon><Setting /></el-icon>
-                <span>智能分配</span>
+            <!-- 右侧节点分配卡片 -->
+            <el-card class="assign-card" shadow="hover">
+              <template #header>
+                <div class="card-header">
+                  <el-icon><Setting /></el-icon>
+                  <span>智能分配</span>
+                </div>
+              </template>
+              
+              <div class="assign-content">
+                <div class="assign-input">
+                  <label class="assign-label">节点数量：</label>
+                  <el-input-number 
+                    v-model="nodeCount" 
+                    :min="1" 
+                    :max="999" 
+                    class="node-counter"
+                  />
+                  <el-button type="primary" @click="autoAssignNodes" class="assign-btn">
+                     <el-icon><Star /></el-icon>
+                     智能分配
+                   </el-button>
+                   <el-button type="warning" @click="resetAssignment" class="assign-btn" :disabled="orderList.length === 0">
+                     <el-icon><Close /></el-icon>
+                     重置分配
+                   </el-button>
+                </div>
+                <div class="assign-input">
+                  <label class="assign-label">地区分配：</label>
+                  <el-input-number 
+                    v-model="regionCount" 
+                    :min="1" 
+                    :max="10" 
+                    class="node-counter"
+                  />
+                  <el-button type="success" @click="autoAssignByRegions" class="assign-btn">
+                     <el-icon><Location /></el-icon>
+                     地区分配
+                   </el-button>
+                  <span class="assign-desc">按地区平均分配节点</span>
+                </div>
+                <div class="assign-tip">
+                  <el-icon><InfoFilled /></el-icon>
+                  <span>智能分配：按库存优先选择节点；地区分配：选择指定数量地区，平均分配节点</span>
+                </div>
               </div>
-            </template>
-            
-            <div class="assign-content">
-              <div class="assign-input">
-                <label class="assign-label">需要购买的节点数量：</label>
-                <el-input-number 
-                  v-model="nodeCount" 
-                  :min="1" 
-                  :max="20" 
-                  class="node-counter"
-                />
-                <el-button type="primary" @click="autoAssignNodes" class="assign-btn">
-                   <el-icon><Star /></el-icon>
-                   智能分配
-                 </el-button>
-                 <el-button type="warning" @click="resetAssignment" class="assign-btn" :disabled="orderList.length === 0">
-                   <el-icon><Close /></el-icon>
-                   重置分配
-                 </el-button>
-              </div>
-              <div class="assign-tip">
-                <el-icon><InfoFilled /></el-icon>
-                <span>系统将根据您的需求自动选择最优的节点组合</span>
-              </div>
-            </div>
-          </el-card>
+            </el-card>
+          </div>
 
           <!-- 节点列表 -->
           <el-card class="nodes-card" shadow="hover" v-loading="isLoading">
             <template #header>
               <div class="card-header">
                 <el-icon><Monitor /></el-icon>
-                <span>可用节点 ({{ allFilteredNodes.length }})</span>
+                <span>可用节点 ({{ allFilteredNodes?.length || 0 }})</span>
                 <div class="header-actions">
                   <span class="page-info">第 {{ currentPage }} / {{ totalPages }} 页</span>
                 </div>
@@ -167,11 +208,11 @@
             
             <div class="node-grid">
               <div 
-                v-for="node in filteredNodes" 
+                v-for="node in (filteredNodes || [])" 
                 :key="node.id" 
                 class="node-item"
                 :class="{ 
-                  'node-selected': orderList.find(n => n.id === node.id),
+                  'node-selected': orderList?.find(n => n.id === node.id),
                   'node-sold-out': getMaxSelectableQuantity(node.stock) === 0
                 }"
               >
@@ -246,7 +287,7 @@
                 :total="allFilteredNodes.length"
                 layout="prev, pager, next, jumper"
                 :hide-on-single-page="false"
-                small
+                size="small"
                 @current-change="handlePageChange"
               />
             </div>
@@ -263,7 +304,7 @@
       <!-- 隐藏状态下的图标显示 -->
       <div v-if="isSummaryHidden" class="summary-icon" @click="toggleSummary">
         <el-icon class="cart-icon"><ShoppingCart /></el-icon>
-        <div class="icon-badge" v-if="orderList.length > 0">{{ orderList.length }}</div>
+        <div class="icon-badge" v-if="orderList?.length > 0">{{ orderList?.length || 0 }}</div>
         <div class="icon-tooltip">订单汇总</div>
       </div>
       
@@ -274,7 +315,7 @@
             <el-icon><ShoppingCart /></el-icon>
             <span>订单汇总</span>
             <el-button 
-              type="text" 
+              link 
               class="toggle-btn"
               @click="toggleSummary"
             >
@@ -317,7 +358,7 @@
                 <span>暂未选择任何线路</span>
               </div>
               <div v-else class="order-items">
-                <div v-for="item in orderList" :key="item.id" class="order-item">
+                <div v-for="item in (orderList || [])" :key="item.id" class="order-item">
                   <div class="order-info">
                     <span class="order-name">{{ item.name }}</span>
                     <div class="quantity-control">
@@ -335,7 +376,7 @@
                   <div class="order-actions">
                     <span class="order-price">￥{{ (getPriceByDuration(item, selectedDuration) * item.quantity).toFixed(2) }}</span>
                     <el-button 
-                      type="text" 
+                      link 
                       size="small" 
                       @click="removeFromOrder(item)"
                       class="remove-btn"
@@ -363,7 +404,7 @@
             <div class="balance-info">
               <span class="balance-label">账户余额：</span>
               <span class="balance-value">￥{{ (userStore.userInfo.balance || 0).toFixed(2) }}</span>
-              <el-link type="primary" :underline="false" class="recharge-link" @click="handleRecharge">
+              <el-link type="primary" underline="never" class="recharge-link" @click="handleRecharge">
                 <el-icon><CreditCard /></el-icon>
                 去充值
               </el-link>
@@ -408,12 +449,58 @@ import {
   CreditCard,
   Money,
   ArrowRight,
-  ArrowLeft
+  ArrowLeft,
+  Search
 } from '@element-plus/icons-vue'
 
 // 游戏数据
 const products = ref([])
 const gameList = ref([])
+const filteredGameList = ref([])
+const gameSearchLoading = ref(false)
+
+// 游戏首字母数据
+const gameTypeList = ref([
+  { label: '全部', value: '' },
+  { label: 'A', value: 'A' },
+  { label: 'B', value: 'B' },
+  { label: 'C', value: 'C' },
+  { label: 'D', value: 'D' },
+  { label: 'E', value: 'E' },
+  { label: 'F', value: 'F' },
+  { label: 'G', value: 'G' },
+  { label: 'H', value: 'H' },
+  { label: 'I', value: 'I' },
+  { label: 'J', value: 'J' },
+  { label: 'K', value: 'K' },
+  { label: 'L', value: 'L' },
+  { label: 'M', value: 'M' },
+  { label: 'N', value: 'N' },
+  { label: 'O', value: 'O' },
+  { label: 'P', value: 'P' },
+  { label: 'Q', value: 'Q' },
+  { label: 'R', value: 'R' },
+  { label: 'S', value: 'S' },
+  { label: 'T', value: 'T' },
+  { label: 'U', value: 'U' },
+  { label: 'V', value: 'V' },
+  { label: 'W', value: 'W' },
+  { label: 'X', value: 'X' },
+  { label: 'Y', value: 'Y' },
+  { label: 'Z', value: 'Z' },
+  { label: '0', value: '0' },
+  { label: '1', value: '1' },
+  { label: '2', value: '2' },
+  { label: '3', value: '3' },
+  { label: '4', value: '4' },
+  { label: '5', value: '5' },
+  { label: '6', value: '6' },
+  { label: '7', value: '7' },
+  { label: '8', value: '8' },
+  { label: '9', value: '9' }
+])
+const filteredGameTypeList = ref([...gameTypeList.value])
+const gameTypeSearchLoading = ref(false)
 const durations = ['一天', '一周', '一个月', '三个月', '半年', '一年']
 const operators = ['全部', '移动', '电信', '多线']
 const lineTypes = ref(['全部'])
@@ -428,6 +515,7 @@ const selectedLineType = ref('全部')
 const selectedCountry = ref('中国')
 const selectedRegion = ref('全部')
 const nodeCount = ref(10)
+const regionCount = ref(3)
 const isSummaryHidden = ref(false)
 const assignGroup = ref('0000')
 
@@ -441,7 +529,7 @@ const userStore = useUserStore()
 const autoHideTimer = ref(null)
 const isHovering = ref(false)
 
-// 自动隐藏订单面板（5秒后）
+// 自动隐藏订单面板（2秒后）
 const startAutoHide = () => {
   if (autoHideTimer.value) {
     clearTimeout(autoHideTimer.value)
@@ -450,7 +538,7 @@ const startAutoHide = () => {
     if (!isHovering.value && orderList.value.length === 0) {
       isSummaryHidden.value = true
     }
-  }, 5000)
+  }, 2000)
 }
 
 // 鼠标悬停时取消自动隐藏
@@ -500,50 +588,114 @@ const getCacheKey = (gameName, operator, lineType) => {
 }
 
 // 过滤后的所有节点（不分页）
+// 使用缓存优化过滤性能
+const filteredNodesCache = ref(new Map())
 const allFilteredNodes = computed(() => {
-  return allNodes.value.filter(node => {
-    const opMatch = selectedOperator.value === '全部' || node.operator === selectedOperator.value
-    
-    // 地区匹配逻辑优化：支持省份名称的模糊匹配
-    let regionMatch = selectedRegion.value === '全部'
-    if (!regionMatch && selectedRegion.value && node.region) {
-      // 如果选择的地区包含在节点的省份中，或者节点的省份包含选择的地区，则匹配
-      regionMatch = node.region.includes(selectedRegion.value) || selectedRegion.value.includes(node.region)
+  try {
+    if (!allNodes.value || !Array.isArray(allNodes.value)) {
+      return []
     }
     
-    const typeMatch = selectedLineType.value === '全部' || node.type === selectedLineType.value
+    const cacheKey = `${selectedOperator.value}_${selectedRegion.value}_${selectedLineType.value}_${allNodes.value.length}`
     
-    return opMatch && regionMatch && typeMatch
-  })
+    if (filteredNodesCache.value.has(cacheKey)) {
+      return filteredNodesCache.value.get(cacheKey)
+    }
+    
+    const filtered = allNodes.value.filter(node => {
+      if (!node) return false
+      
+      const opMatch = selectedOperator.value === '全部' || node.operator === selectedOperator.value
+      
+      // 地区匹配逻辑优化：支持省份名称的模糊匹配
+      let regionMatch = selectedRegion.value === '全部'
+      if (!regionMatch && selectedRegion.value && node.region) {
+        // 如果选择的地区包含在节点的省份中，或者节点的省份包含选择的地区，则匹配
+        regionMatch = node.region.includes(selectedRegion.value) || selectedRegion.value.includes(node.region)
+      }
+      
+      const typeMatch = selectedLineType.value === '全部' || node.type === selectedLineType.value
+      
+      return opMatch && regionMatch && typeMatch
+    })
+    
+    filteredNodesCache.value.set(cacheKey, filtered)
+    return filtered
+  } catch (error) {
+    console.error('过滤节点时出错:', error)
+    return []
+  }
 })
 
 // 当前页显示的节点（分页后）
 const filteredNodes = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value
-  const end = start + pageSize.value
-  return allFilteredNodes.value.slice(start, end)
+  try {
+    if (!allFilteredNodes.value || !Array.isArray(allFilteredNodes.value)) {
+      return []
+    }
+    const start = (currentPage.value - 1) * pageSize.value
+    const end = start + pageSize.value
+    return allFilteredNodes.value.slice(start, end)
+  } catch (error) {
+    console.error('分页节点时出错:', error)
+    return []
+  }
 })
 
 // 总页数
 const totalPages = computed(() => {
-  return Math.ceil(allFilteredNodes.value.length / pageSize.value)
+  try {
+    if (!allFilteredNodes.value || !Array.isArray(allFilteredNodes.value)) {
+      return 1
+    }
+    return Math.max(1, Math.ceil(allFilteredNodes.value.length / pageSize.value))
+  } catch (error) {
+    console.error('计算总页数时出错:', error)
+    return 1
+  }
 })
 
 // 计算每个地区的可用节点数量
-// 性能优化：此计算属性只依赖于allNodes，不依赖于selectedRegion
-// 这样切换地区时不会重新计算，提升性能
+// 性能优化：使用缓存机制，避免频繁重新计算
+const regionNodeCountsCache = ref(new Map())
 const regionNodeCounts = computed(() => {
-  const counts = {}
-  regions.forEach(region => {
-    if (region === '全部') {
-      counts[region] = allNodes.value.length
-    } else {
-      counts[region] = allNodes.value.filter(node => {
-        return node.region && (node.region.includes(region) || region.includes(node.region))
-      }).length
+  try {
+    if (!allNodes.value || !Array.isArray(allNodes.value)) {
+      const emptyCounts = {}
+      regions.forEach(region => {
+        emptyCounts[region] = 0
+      })
+      return emptyCounts
     }
-  })
-  return counts
+    
+    // 优化缓存键生成，避免创建过长字符串
+    const cacheKey = `nodes_${allNodes.value.length}_${allNodes.value.length > 0 ? allNodes.value[0]?.id || 'empty' : 'empty'}`
+    
+    if (regionNodeCountsCache.value.has(cacheKey)) {
+      return regionNodeCountsCache.value.get(cacheKey)
+    }
+    
+    const counts = {}
+    regions.forEach(region => {
+      if (region === '全部') {
+        counts[region] = allNodes.value.length
+      } else {
+        counts[region] = allNodes.value.filter(node => {
+          return node && node.region && (node.region.includes(region) || region.includes(node.region))
+        }).length
+      }
+    })
+    
+    regionNodeCountsCache.value.set(cacheKey, counts)
+    return counts
+  } catch (error) {
+    console.error('计算地区节点数量时出错:', error)
+    const emptyCounts = {}
+    regions.forEach(region => {
+      emptyCounts[region] = 0
+    })
+    return emptyCounts
+  }
 })
 
 const orderList = ref([])
@@ -574,12 +726,12 @@ const addToOrder = (node) => {
   orderList.value.push(nodeWithQuantity)
   ElMessage.success(`已添加 ${node.name} 到订单，数量：${quantity}`)
   
-  // 添加节点时显示订单面板
-  isSummaryHidden.value = false
+  // 添加节点时不自动显示订单面板
+  // isSummaryHidden.value = false
   // 取消自动隐藏
-  if (autoHideTimer.value) {
-    clearTimeout(autoHideTimer.value)
-  }
+  // if (autoHideTimer.value) {
+  //   clearTimeout(autoHideTimer.value)
+  // }
 }
 
 const removeFromOrder = (node) => {
@@ -688,6 +840,86 @@ const autoAssignNodes = () => {
   if (autoHideTimer.value) {
     clearTimeout(autoHideTimer.value)
   }
+}
+
+const autoAssignByRegions = () => {
+  // 获取所有可用节点
+  const availableNodes = allFilteredNodes.value.filter(node => {
+    return getMaxSelectableQuantity(node.stock) > 0
+  })
+  
+  if (availableNodes.length === 0) {
+    ElMessage.warning('当前筛选条件下没有可用节点')
+    return
+  }
+  
+  // 按地区分组节点
+  const nodesByRegion = {}
+  availableNodes.forEach(node => {
+    const region = node.region || '未知地区'
+    if (!nodesByRegion[region]) {
+      nodesByRegion[region] = []
+    }
+    nodesByRegion[region].push(node)
+  })
+  
+  // 获取所有地区并按节点数量排序（优先选择节点多的地区）
+  const regionList = Object.keys(nodesByRegion)
+    .map(region => ({
+      region,
+      nodes: nodesByRegion[region],
+      count: nodesByRegion[region].length
+    }))
+    .sort((a, b) => b.count - a.count)
+  
+  // 检查是否有足够的地区
+  if (regionList.length < regionCount.value) {
+    ElMessage.warning(`当前只有 ${regionList.length} 个地区有可用节点，少于所需的 ${regionCount.value} 个地区`)
+    return
+  }
+  
+  // 选择前N个地区
+  const selectedRegions = regionList.slice(0, regionCount.value)
+  
+  // 计算每个地区应该分配的节点数量（平均分配）
+  const nodesPerRegion = Math.floor(nodeCount.value / regionCount.value)
+  const remainingNodes = nodeCount.value % regionCount.value
+  
+  const assignedNodes = []
+  
+  selectedRegions.forEach((regionInfo, index) => {
+    // 前几个地区多分配一个节点（如果有余数）
+    const currentRegionNodeCount = nodesPerRegion + (index < remainingNodes ? 1 : 0)
+    
+    // 从该地区选择节点（按库存量排序）
+    const regionNodes = regionInfo.nodes
+      .sort((a, b) => {
+        const stockA = a.stock === '99+' ? 999 : (parseInt(a.stock) || 0)
+        const stockB = b.stock === '99+' ? 999 : (parseInt(b.stock) || 0)
+        return stockB - stockA
+      })
+      .slice(0, currentRegionNodeCount)
+      .map(node => ({ ...node, quantity: 1 }))
+    
+    assignedNodes.push(...regionNodes)
+  })
+  
+  orderList.value = assignedNodes
+  
+  // 生成分配详情信息
+  const regionDetails = selectedRegions.map((regionInfo, index) => {
+    const currentRegionNodeCount = nodesPerRegion + (index < remainingNodes ? 1 : 0)
+    return `${regionInfo.region}(${currentRegionNodeCount}个)`
+  }).join('、')
+  
+  ElMessage.success(`已按地区分配 ${assignedNodes.length} 个节点：${regionDetails}`)
+  
+  // 自动分配后不自动显示订单面板
+  // isSummaryHidden.value = false
+  // 取消自动隐藏
+  // if (autoHideTimer.value) {
+  //   clearTimeout(autoHideTimer.value)
+  // }
 }
 
 const handlePayment = async () => {
@@ -844,27 +1076,38 @@ const toggleSummary = () => {
 const fetchGameData = async (type = '') => {
   try {
     const response = await getGameData(type)
-    if (response.Code === 1000 && response.List) {
-      gameList.value = response.List
+    if (response && response.Code === 1000 && response.List) {
+      gameList.value = Array.isArray(response.List) ? response.List : []
+      filteredGameList.value = [...gameList.value] // 初始化过滤列表
       // 重置选中的游戏
       selectedProduct.value = ''
       // 设置默认选中第一个游戏
-      if (gameList.value.length > 0) {
+      if (gameList.value.length > 0 && gameList.value[0] && gameList.value[0].Game) {
         selectedProduct.value = gameList.value[0].Game
-        // 获取第一个游戏的节点数据
-        fetchAreaData()
+        // 使用nextTick确保响应式数据更新后再获取节点数据
+        nextTick(() => {
+          if (selectedProduct.value) {
+            fetchAreaData()
+          }
+        })
       }
     } else {
       ElMessage.error('获取游戏数据失败')
+      gameList.value = []
+      filteredGameList.value = []
     }
   } catch (error) {
+    console.error('获取游戏数据失败:', error)
     ElMessage.error('获取游戏数据失败')
+    gameList.value = []
+    filteredGameList.value = []
   }
 }
 
 // 获取区域节点数据
 const fetchAreaData = async () => {
   if (!selectedProduct.value) {
+    allNodes.value = []
     return
   }
   
@@ -906,10 +1149,14 @@ const fetchAreaData = async () => {
          }
          
          // 转换API返回的数据格式为组件需要的格式
-         const nodeData = response.List.map((item, index) => ({
+         const nodeData = response.List.map((item, index) => {
+           // 添加安全检查，确保数据完整性
+           if (!item) return null
+           
+           return {
            id: item.Id || index + 1,
            name: item.Area || '',
-           stock: item.Count > 0 ? item.Count.toString() : '99+',
+           stock: item.Count > 99 ? '99+' : item.Count.toString(),
            price: item.Price_Moon || item.Price || 0,
            operator: item.Isp || '',
            region: item.Province || '',
@@ -927,7 +1174,8 @@ const fetchAreaData = async () => {
            stability: item.Stability || '',
            // 添加默认选择数量
            selectedQuantity: 1
-         }))
+         }
+         }).filter(Boolean) // 过滤掉null值
          
          // 存入缓存
          dataCache.value.set(cacheKey, nodeData)
@@ -956,13 +1204,15 @@ const debouncedFetchAreaData = () => {
   }
   debounceTimer = setTimeout(() => {
     fetchAreaData()
-  }, 300)
+  }, 200) // 减少防抖延迟，提升响应速度
 }
 
 // 游戏类型变化处理
 const handleGameTypeChange = () => {
   // 清理缓存，因为游戏类型变化会影响所有数据
   dataCache.value.clear()
+  // 重置过滤列表
+  filteredGameList.value = []
   fetchGameData(selectedGameType.value)
 }
 
@@ -970,6 +1220,61 @@ const handleGameTypeChange = () => {
 const handleProductChange = () => {
   if (selectedProduct.value) {
     fetchAreaData()
+  }
+}
+
+// 搜索游戏方法
+const searchGames = (query) => {
+  gameSearchLoading.value = true
+  
+  // 使用防抖优化搜索性能
+  setTimeout(() => {
+    if (query) {
+      // 根据关键词过滤游戏列表
+      filteredGameList.value = gameList.value.filter(game => 
+        game.Game && game.Game.toLowerCase().includes(query.toLowerCase())
+      )
+    } else {
+      // 如果没有搜索词，显示所有游戏
+      filteredGameList.value = [...gameList.value]
+    }
+    gameSearchLoading.value = false
+  }, 200)
+}
+
+// 处理游戏选择框获得焦点事件
+const handleGameSelectFocus = () => {
+  // 当获得焦点时，确保显示所有游戏选项
+  if (filteredGameList.value.length === 0 && gameList.value.length > 0) {
+    filteredGameList.value = [...gameList.value]
+  }
+}
+
+// 搜索游戏首字母方法
+const searchGameTypes = (query) => {
+  gameTypeSearchLoading.value = true
+  
+  // 使用防抖优化搜索性能
+  setTimeout(() => {
+    if (query) {
+      // 根据关键词过滤首字母列表
+      filteredGameTypeList.value = gameTypeList.value.filter(type => 
+        type.label.toLowerCase().includes(query.toLowerCase()) ||
+        type.value.toLowerCase().includes(query.toLowerCase())
+      )
+    } else {
+      // 如果没有搜索词，显示所有首字母选项
+      filteredGameTypeList.value = [...gameTypeList.value]
+    }
+    gameTypeSearchLoading.value = false
+  }, 200)
+}
+
+// 处理游戏首字母选择框获得焦点事件
+const handleGameTypeSelectFocus = () => {
+  // 当获得焦点时，确保显示所有首字母选项
+  if (filteredGameTypeList.value.length === 0) {
+    filteredGameTypeList.value = [...gameTypeList.value]
   }
 }
 
@@ -994,13 +1299,16 @@ const resetPagination = () => {
 // 注意：地区切换不需要重新加载数据，只有游戏、运营商、线路类型变化才需要
 watch([selectedProduct, selectedOperator, selectedLineType], () => {
   if (selectedProduct.value) {
+    // 清理过滤缓存
+    filteredNodesCache.value.clear()
     resetPagination()
     debouncedFetchAreaData()
   }
 }, { deep: true })
 
-// 监听地区变化，重置分页
+// 监听地区变化，重置分页并清理过滤缓存
 watch(selectedRegion, () => {
+  filteredNodesCache.value.clear()
   resetPagination()
 })
 
@@ -1008,16 +1316,21 @@ watch(selectedRegion, () => {
 
 // 页面初始化时启动自动隐藏
 onMounted(() => {
-  // 获取游戏数据
-  fetchGameData()
-  
-  // 如果初始订单为空，启动自动隐藏
-  if (orderList.value.length === 0) {
-    startAutoHide()
+  try {
+    // 获取游戏数据
+    fetchGameData()
+    
+    // 如果初始订单为空，启动自动隐藏
+    if (orderList.value.length === 0) {
+      startAutoHide()
+    }
+  } catch (error) {
+    console.error('组件初始化失败:', error)
+    ElMessage.error('页面初始化失败，请刷新重试')
   }
 })
 
-// 组件卸载时清理定时器
+// 组件卸载时清理定时器和缓存
 onUnmounted(() => {
   if (autoHideTimer.value) {
     clearTimeout(autoHideTimer.value)
@@ -1025,6 +1338,10 @@ onUnmounted(() => {
   if (debounceTimer) {
     clearTimeout(debounceTimer)
   }
+  // 清理缓存，释放内存
+  dataCache.value.clear()
+  filteredNodesCache.value.clear()
+  regionNodeCountsCache.value.clear()
 })
 </script>
 
@@ -1124,7 +1441,7 @@ onUnmounted(() => {
 
 // 左侧边栏
 .left-sidebar {
-  width: 280px;
+  width: 220px;
   flex-shrink: 0;
   align-self: stretch;
   
@@ -1153,11 +1470,11 @@ onUnmounted(() => {
 .el-card {
   border-radius: 12px;
   border: none;
-  transition: all 0.3s ease;
+  /* transition: all 0.3s ease; */
   
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    /* transform: translateY(-2px); */
+      /* box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1); */
   }
   
   :deep(.el-card__header) {
@@ -1181,6 +1498,22 @@ onUnmounted(() => {
   
   :deep(.el-card__body) {
     padding: 20px;
+  }
+}
+
+// 筛选条件和智能分配左右布局
+.filter-assign-layout {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+  
+  .filter-card {
+      flex: 1.2;
+    }
+  
+  .assign-card {
+    flex: 1;
+    min-width: 320px;
   }
 }
 
@@ -1217,6 +1550,7 @@ onUnmounted(() => {
           width: 100%;
           border-radius: 6px;
           margin: 0 2px;
+          /* transition: background-color 0.2s ease, border-color 0.2s ease; */
         }
       }
     }
@@ -1248,17 +1582,18 @@ onUnmounted(() => {
     
     .region-btn {
       border-radius: 20px;
-      transition: all 0.3s ease;
+      padding: 6px 16px;
+      /* transition: all 0.3s ease; */
       
       &.region-active {
         background: linear-gradient(135deg, #409eff 0%, #36a3f7 100%);
         border-color: #409eff;
         color: white;
-        transform: scale(1.05);
+        /* transform: scale(1.05); */
       }
       
       &:hover {
-        transform: translateY(-1px);
+        /* transform: translateY(-1px); */
       }
     }
   }
@@ -1271,13 +1606,17 @@ onUnmounted(() => {
     flex: 1;
     overflow-y: auto;
     padding-right: 12px; // 进一步增加右边距以完全容纳按钮的偏移
+    // 启用硬件加速
+    transform: translateZ(0);
+    -webkit-overflow-scrolling: touch;
     
     .region-btn-vertical {
       width: calc(100% - 8px); // 进一步减少按钮宽度以防止偏移后超出容器
       justify-content: flex-start;
       border-radius: 8px;
-      transition: all 0.3s ease;
-      padding: 10px 16px;
+      /* transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease; */
+        padding: 6px 16px;
+        /* will-change: transform; */
       
       .region-btn-content {
         display: flex;
@@ -1304,8 +1643,9 @@ onUnmounted(() => {
         background: linear-gradient(135deg, #409eff 0%, #36a3f7 100%);
         border-color: #409eff;
         color: white;
-        transform: translateX(4px);
-        box-shadow: 0 2px 8px rgba(64, 158, 255, 0.3);
+        /* will-change: transform; */
+        /* transform: translateX(4px); */
+          /* box-shadow: 0 2px 8px rgba(64, 158, 255, 0.3); */
         
         .region-btn-content .region-count {
           background: rgba(255, 255, 255, 0.3);
@@ -1314,8 +1654,9 @@ onUnmounted(() => {
       }
       
       &:hover {
-        transform: translateX(2px);
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+         /* will-change: transform; */
+          /* transform: translateX(2px); */
+          /* box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); */
         
         &:not(.region-active) .region-btn-content .region-count {
           background: rgba(64, 158, 255, 0.1);
@@ -1347,29 +1688,59 @@ onUnmounted(() => {
 
 // 智能分配卡片
 .assign-card {
+  // 确保智能分配卡片使用与其他卡片一致的header样式
+  &.el-card :deep(.el-card__header) {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+    border-bottom: 1px solid #e8e8e8 !important;
+    padding: 16px 20px !important;
+    
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      color: #303133 !important;
+      
+      .el-icon {
+        font-size: 18px;
+        color: #409eff !important;
+      }
+    }
+  }
+  
   .assign-content {
     .assign-input {
       display: flex;
       align-items: center;
-      gap: 15px;
-      margin-bottom: 15px;
+      gap: 10px;
+      margin-bottom: 12px;
       
       .assign-label {
         font-weight: 500;
         color: #606266;
         white-space: nowrap;
+        font-size: 14px;
+        min-width: 80px; // 确保标签宽度一致
       }
       
       .node-counter {
-        width: 120px;
+        width: 100px;
+      }
+      
+      .assign-desc {
+        color: #909399;
+        font-size: 13px;
+        white-space: nowrap;
+        min-width: 0; // 允许描述文本收缩
       }
       
       .assign-btn {
-        border-radius: 20px;
-        padding: 8px 20px;
+        border-radius: 16px;
+        padding: 6px 16px;
+        font-size: 13px;
         
         .el-icon {
-          margin-right: 6px;
+          margin-right: 4px;
         }
       }
     }
@@ -1427,13 +1798,15 @@ onUnmounted(() => {
       border: 2px solid #e8e8e8;
       border-radius: 12px;
       padding: 16px;
-      transition: all 0.3s ease;
-      cursor: pointer;
-      
-      &:hover {
+      /* transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease; */
+        cursor: pointer;
+        /* will-change: transform; */
+        
+        &:hover {
+          /* will-change: transform; */
         border-color: #409eff;
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(64, 158, 255, 0.1);
+        /* transform: translateY(-2px); */
+          /* box-shadow: 0 6px 20px rgba(64, 158, 255, 0.1); */
       }
       
       &.node-selected {
@@ -1642,12 +2015,12 @@ onUnmounted(() => {
 // 订单汇总
 .order-summary {
   position: fixed;
-  top: 50%;
+  bottom: 20px;
   right: 20px;
-  transform: translateY(-50%);
+  transform: none;
   width: 320px;
   z-index: 1000;
-  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
   max-height: 80vh;
   overflow-y: auto;
   
@@ -1658,51 +2031,51 @@ onUnmounted(() => {
   // 隐藏状态下的图标样式
   .summary-icon {
     position: relative;
-    width: 60px;
-    height: 60px;
+    width: 48px;
+    height: 48px;
     background: linear-gradient(135deg, #409eff 0%, #67c23a 100%);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 4px 20px rgba(64, 158, 255, 0.3);
-    transition: all 0.3s ease;
-    animation: float 3s ease-in-out infinite;
+    /* box-shadow: 0 4px 20px rgba(64, 158, 255, 0.3); */
+    /* transition: all 0.3s ease; */
+    /* animation: float 3s ease-in-out infinite; */
     z-index: 1001;
     
     &:hover {
-      transform: scale(1.1);
-      box-shadow: 0 6px 25px rgba(64, 158, 255, 0.4);
-      animation: none;
+      /* transform: scale(1.1); */
+      /* box-shadow: 0 6px 25px rgba(64, 158, 255, 0.4); */
+      /* animation: none; */
       
       .icon-tooltip {
         opacity: 1;
-        transform: translateX(-50%) translateY(-100%) scale(1);
+        /* transform: translateX(-50%) translateY(-100%) scale(1); */
       }
     }
     
     .cart-icon {
-      font-size: 24px;
+      font-size: 20px;
       color: white;
     }
     
     .icon-badge {
       position: absolute;
-      top: -5px;
-      right: -5px;
+      top: -4px;
+      right: -4px;
       background: #f56c6c;
       color: white;
       border-radius: 50%;
-      width: 20px;
-      height: 20px;
+      width: 18px;
+      height: 18px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 600;
       border: 2px solid white;
-      animation: bounce 1s ease-in-out infinite;
+      /* animation: bounce 1s ease-in-out infinite; */
     }
     
     .icon-tooltip {
@@ -1717,7 +2090,7 @@ onUnmounted(() => {
       font-size: 12px;
       white-space: nowrap;
       opacity: 0;
-      transition: all 0.3s ease;
+      /* transition: all 0.3s ease; */
       z-index: 1002;
       
       &::after {
@@ -1745,18 +2118,18 @@ onUnmounted(() => {
   }
 }
 
-// 浮动动画
-@keyframes float {
+// 浮动动画 - 已禁用
+/* @keyframes float {
   0%, 100% {
     transform: translateY(0px);
   }
   50% {
     transform: translateY(-3px);
   }
-}
+} */
 
-// 徽章弹跳动画
-@keyframes bounce {
+// 徽章弹跳动画 - 已禁用
+/* @keyframes bounce {
   0%, 20%, 50%, 80%, 100% {
     transform: scale(1);
   }
@@ -1766,7 +2139,7 @@ onUnmounted(() => {
   60% {
     transform: scale(1.05);
   }
-}
+} */
 
 
 
@@ -2035,13 +2408,22 @@ onUnmounted(() => {
         flex: 0 0 auto;
         
         &.region-active {
-          transform: scale(1.05);
+          /* transform: scale(1.05); */
         }
         
         &:hover {
-          transform: translateY(-1px);
+          /* transform: translateY(-1px); */
         }
       }
+    }
+  }
+  
+  // 筛选条件和智能分配在中等屏幕上改为垂直布局
+  .filter-assign-layout {
+    flex-direction: column;
+    
+    .assign-card {
+      min-width: auto;
     }
   }
   
@@ -2099,6 +2481,16 @@ onUnmounted(() => {
   
   .node-grid {
     grid-template-columns: 1fr;
+  }
+  
+  // 小屏幕上筛选条件和智能分配垂直布局
+  .filter-assign-layout {
+    flex-direction: column;
+    gap: 15px;
+    
+    .assign-card {
+      min-width: auto;
+    }
   }
   
   .assign-input {

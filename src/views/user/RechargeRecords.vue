@@ -100,7 +100,7 @@
                 <div class="order-number">
                   {{ row.my_order_number }}
                   <el-button 
-                    type="text" 
+                    link 
                     size="small" 
                     @click="copyOrderNumber(row.my_order_number)"
                     class="copy-btn"
@@ -193,7 +193,7 @@
           <el-descriptions-item label="订单号">
             <span class="order-number">{{ selectedOrder.my_order_number }}</span>
             <el-button 
-              type="text" 
+              link 
               size="small" 
               @click="copyOrderNumber(selectedOrder.my_order_number)"
             >

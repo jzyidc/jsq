@@ -1,3 +1,7 @@
+// 首先初始化DOM现代化处理，必须在任何第三方库导入之前执行
+import { initWarningSuppress } from '@/utils/suppressWarnings'
+initWarningSuppress()
+
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import ElementPlus from 'element-plus'

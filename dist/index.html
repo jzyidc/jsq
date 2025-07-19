@@ -4,11 +4,95 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>加速器管理系统</title>
+    <title>万维加速器</title>
     <meta name="description" content="基于Vue.js的管理系统，提供用户管理和后台管理功能" />
     <meta name="keywords" content="Vue.js,管理系统,后台管理,用户中心" />
-    <script type="module" crossorigin src="/js/index-8dfd10b0.js"></script>
-    <link rel="stylesheet" href="/css/index-d5131418.css">
+    
+    <!-- 早期警告抑制脚本 - 必须在所有其他脚本之前执行 -->
+    <script>
+      (function() {
+        'use strict';
+        
+        // 保存原始的 console 方法
+        var originalWarn = console.warn;
+        var originalError = console.error;
+        
+        // DOM Mutation Event 相关关键词
+        var mutationEventFilters = [
+          'DOMNodeInsertedIntoDocument',
+          'DOMNodeRemovedFromDocument',
+          'DOMSubtreeModified',
+          'DOMAttrModified', 
+          'DOMCharacterDataModified',
+          'DOMNodeInserted',
+          'DOMNodeRemoved',
+          'DOM Mutation Event',
+          'deprecated',
+          'event type is deprecated',
+          'MutationObserver instead',
+          'synchronous',
+          'legacy-event-types',
+          'w3c.github.io/uievents',
+          'performance issues today',
+          'risk of future incompatibility'
+        ];
+        
+        // 检查消息是否应该被过滤
+        function shouldFilterMessage(message) {
+          if (typeof message !== 'string') {
+            message = String(message);
+          }
+          var lowerMessage = message.toLowerCase();
+          return mutationEventFilters.some(function(filter) {
+            return lowerMessage.indexOf(filter.toLowerCase()) !== -1;
+          });
+        }
+        
+        // 重写 console.warn
+        console.warn = function() {
+          var args = Array.prototype.slice.call(arguments);
+          var message = args.join(' ');
+          
+          if (shouldFilterMessage(message)) {
+            // 在开发环境下可以选择显示（通过URL参数控制）
+            if (window.location.search.indexOf('showDeprecatedWarnings=true') !== -1) {
+              originalWarn.apply(console, ['[已抑制的警告]'].concat(args));
+            }
+            return;
+          }
+          
+          originalWarn.apply(console, args);
+        };
+        
+        // 重写 console.error
+        console.error = function() {
+          var args = Array.prototype.slice.call(arguments);
+          var message = args.join(' ');
+          
+          if (shouldFilterMessage(message)) {
+            if (window.location.search.indexOf('showDeprecatedWarnings=true') !== -1) {
+              originalError.apply(console, ['[已抑制的错误]'].concat(args));
+            }
+            return;
+          }
+          
+          originalError.apply(console, args);
+        };
+        
+        // 监听全局错误事件
+        if (window.addEventListener) {
+          window.addEventListener('error', function(event) {
+            if (event.message && shouldFilterMessage(event.message)) {
+              event.preventDefault();
+              event.stopPropagation();
+              return false;
+            }
+          }, true);
+        }
+      })();
+    </script>
+    <script type="module" crossorigin src="/js/index-77fd0c89.js"></script>
+    <link rel="stylesheet" href="/css/index-64580d46.css">
   </head>
   <body>
     <div id="app"></div>

@@ -165,6 +165,7 @@ export const useUserStore = defineStore('user', () => {
           authentication: response.Authentication || false,
           total_pay_amount: response.total_pay_amount || 0,
           total_commission_amount: response.total_commission_amount || 0,
+          Discount: response.Discount || '0%',
           nodeInfo: response.node_info || {},
           referrerInfo: response.referrer_info || {},
           myUserInfo: response.my_user_info || {}

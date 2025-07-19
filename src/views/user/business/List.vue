@@ -356,18 +356,28 @@
             <el-form-item label="目标地区" prop="AreaName">
               <el-select
                 v-model="switchNodeDialog.form.AreaName"
-                placeholder="请选择地区"
+                :placeholder="switchNodeDialog.currentNode && switchNodeDialog.currentNode.Game === '批量切换' ? `请选择地区（最多${getMaxSelectableAreas()}个）` : '请选择地区（可多选）'"
                 style="width: 100%"
                 size="large"
+                multiple
+                collapse-tags
+                collapse-tags-tooltip
+                :max-collapse-tags="3"
                 :disabled="!switchNodeDialog.form.Province"
+                :multiple-limit="getMaxSelectableAreas()"
               >
                 <el-option
                  v-for="area in switchNodeDialog.areaOptions"
                  :key="area.Area"
-                 :label="`${area.Area} (${area.Count > 0 ? area.Count : '99+'}个空闲)`"
+                 :label="`${area.Area} (${area.Count > 99 ? '99+' : area.Count}个空闲)`"
                  :value="area.Area"
                />
               </el-select>
+              <div class="area-select-tip" v-if="switchNodeDialog.currentNode && switchNodeDialog.currentNode.Game === '批量切换'">
+                <el-text size="small" type="info">
+                  可选择 1-{{ getMaxSelectableAreas() }} 个地区，节点将自动分配到选中的地区
+                </el-text>
+              </div>
             </el-form-item>
           </div>
         </el-form>
@@ -588,34 +598,34 @@
           >
             <el-form-item prop="format">
               <el-radio-group v-model="copyDialog.form.format" class="format-radio-group">
+                <el-radio value="laoyu" class="format-radio">
+                  <div class="format-option">
+                    <div class="format-title">老鱼格式</div>
+                    <div class="format-desc">地址/账号/密码/有效期</div>
+                  </div>
+                </el-radio>
+                <el-radio value="laoyuRegion" class="format-radio">
+                  <div class="format-option">
+                    <div class="format-title">老鱼带地区格式</div>
+                    <div class="format-desc">地址/账号/密码/地区名/有效期</div>
+                  </div>
+                </el-radio>
                 <el-radio value="wanan" class="format-radio">
                   <div class="format-option">
                     <div class="format-title">万安格式</div>
-                    <div class="format-desc">ip|端口|账号|密码|到期日期</div>
+                    <div class="format-desc">地址|账号|密码|有效期</div>
                   </div>
                 </el-radio>
-                <el-radio value="slash" class="format-radio">
+                <el-radio value="youmi" class="format-radio">
                   <div class="format-option">
-                    <div class="format-title">斜杠格式</div>
-                    <div class="format-desc">ip/端口/账号/密码</div>
+                    <div class="format-title">有米格式</div>
+                    <div class="format-desc">地址|账号|密码|有效期</div>
                   </div>
                 </el-radio>
-                <el-radio value="region" class="format-radio">
+                <el-radio value="youmiRegion" class="format-radio">
                   <div class="format-option">
-                    <div class="format-title">地区格式</div>
-                    <div class="format-desc">ip/端口/账号/密码/地区</div>
-                  </div>
-                </el-radio>
-                <el-radio value="regionDate" class="format-radio">
-                  <div class="format-option">
-                    <div class="format-title">地区日期格式</div>
-                    <div class="format-desc">ip/端口/账号/密码/地区/购买/到期</div>
-                  </div>
-                </el-radio>
-                <el-radio value="browser" class="format-radio">
-                  <div class="format-option">
-                    <div class="format-title">浏览器格式</div>
-                    <div class="format-desc">ip:端口:账号:密码</div>
+                    <div class="format-title">有米带地区格式</div>
+                    <div class="format-desc">地址|账号|密码|地区名|有效期</div>
                   </div>
                 </el-radio>
               </el-radio-group>
@@ -692,34 +702,34 @@
           >
             <el-form-item prop="format">
               <el-radio-group v-model="exportDialog.form.format" class="format-radio-group">
+                <el-radio value="laoyu" class="format-radio">
+                  <div class="format-option">
+                    <div class="format-title">老鱼格式</div>
+                    <div class="format-desc">地址/账号/密码/有效期</div>
+                  </div>
+                </el-radio>
+                <el-radio value="laoyuRegion" class="format-radio">
+                  <div class="format-option">
+                    <div class="format-title">老鱼带地区格式</div>
+                    <div class="format-desc">地址/账号/密码/地区名/有效期</div>
+                  </div>
+                </el-radio>
                 <el-radio value="wanan" class="format-radio">
                   <div class="format-option">
                     <div class="format-title">万安格式</div>
-                    <div class="format-desc">ip|端口|账号|密码|到期日期</div>
+                    <div class="format-desc">地址|账号|密码|有效期</div>
                   </div>
                 </el-radio>
-                <el-radio value="slash" class="format-radio">
+                <el-radio value="youmi" class="format-radio">
                   <div class="format-option">
-                    <div class="format-title">斜杠格式</div>
-                    <div class="format-desc">ip/端口/账号/密码</div>
+                    <div class="format-title">有米格式</div>
+                    <div class="format-desc">地址|账号|密码|有效期</div>
                   </div>
                 </el-radio>
-                <el-radio value="region" class="format-radio">
+                <el-radio value="youmiRegion" class="format-radio">
                   <div class="format-option">
-                    <div class="format-title">地区格式</div>
-                    <div class="format-desc">ip/端口/账号/密码/地区</div>
-                  </div>
-                </el-radio>
-                <el-radio value="regionDate" class="format-radio">
-                  <div class="format-option">
-                    <div class="format-title">地区日期格式</div>
-                    <div class="format-desc">ip/端口/账号/密码/地区/购买/到期</div>
-                  </div>
-                </el-radio>
-                <el-radio value="browser" class="format-radio">
-                  <div class="format-option">
-                    <div class="format-title">浏览器格式</div>
-                    <div class="format-desc">ip:端口:账号:密码</div>
+                    <div class="format-title">有米带地区格式</div>
+                    <div class="format-desc">地址|账号|密码|地区名|有效期</div>
                   </div>
                 </el-radio>
               </el-radio-group>
@@ -880,6 +890,7 @@ const router = useRouter()
 
 // 内置省份数据
 const PROVINCE_LIST = [
+  { Province: '全国' }, // 新增全国选项
   { Province: '北京市' },
   { Province: '天津市' },
   { Province: '河北省' },
@@ -951,7 +962,7 @@ const switchNodeDialog = reactive({
   form: {
     GameName: '',
     Province: '',
-    AreaName: ''
+    AreaName: [] // 修改为数组支持多选
   },
   gameOptions: [],
   provinceOptions: [],
@@ -964,7 +975,7 @@ const switchNodeDialog = reactive({
       { required: true, message: '请选择省份', trigger: 'change' }
     ],
     AreaName: [
-      { required: true, message: '请选择目标地区', trigger: 'change' }
+      { required: true, type: 'array', min: 1, message: '请至少选择一个目标地区', trigger: 'change' }
     ]
   }
 })
@@ -995,7 +1006,7 @@ const copyDialog = reactive({
   visible: false,
   loading: false,
   form: {
-    format: 'wanan'
+    format: 'laoyu'
   },
   rules: {
     format: [
@@ -1011,7 +1022,7 @@ const exportDialog = reactive({
   visible: false,
   loading: false,
   form: {
-    format: 'wanan'
+    format: 'laoyu'
   },
   rules: {
     format: [
@@ -1088,7 +1099,7 @@ const handleSwitchNode = async (row) => {
     // 重置表单
     switchNodeDialog.form.GameName = ''
     switchNodeDialog.form.Province = ''
-    switchNodeDialog.form.AreaName = ''
+    switchNodeDialog.form.AreaName = []
     switchNodeDialog.provinceOptions = []
     switchNodeDialog.areaOptions = []
     
@@ -1204,8 +1215,10 @@ const handleQuickSwitch = async (row) => {
     const response = await switchNode({
       Id: [row.Id], // 节点ID数组
       GameName: row.Game, // 使用当前游戏
-      Province: row.Province || '', // 使用当前省份（如果有）
-      AreaName: row.Area // 使用当前地区
+      InfoList: [{
+        area: row.Area, // 使用当前地区
+        quantity: "1"
+      }]
     })
     
     if (response.Code === 1000) {
@@ -1377,7 +1390,7 @@ const handleBatchSwitchNode = async () => {
     // 重置表单
     switchNodeDialog.form.GameName = ''
     switchNodeDialog.form.Province = ''
-    switchNodeDialog.form.AreaName = ''
+    switchNodeDialog.form.AreaName = []
     switchNodeDialog.provinceOptions = []
     switchNodeDialog.areaOptions = []
     
@@ -1456,8 +1469,10 @@ const handleBatchSwitchIP = async () => {
         const response = await switchNode({
           Id: group.nodeIds,
           GameName: group.game,
-          Province: group.province,
-          AreaName: group.area
+          InfoList: [{
+            area: group.area,
+            quantity: group.nodeIds.length.toString()
+          }]
         })
         
         if (response.Code === 1000) {
@@ -1589,7 +1604,7 @@ const fetchData = async () => {
 const handleGameChange = (gameName) => {
   // 重置省份和地区选择
   switchNodeDialog.form.Province = ''
-  switchNodeDialog.form.AreaName = ''
+  switchNodeDialog.form.AreaName = []
   switchNodeDialog.areaOptions = []
   
   if (!gameName) {
@@ -1601,29 +1616,57 @@ const handleGameChange = (gameName) => {
   switchNodeDialog.provinceOptions = PROVINCE_LIST
 }
 
+// 获取最大可选择地区数量
+const getMaxSelectableAreas = () => {
+  // 如果是批量切换节点，返回选中节点的数量
+  if (switchNodeDialog.currentNode && switchNodeDialog.currentNode.Game === '批量切换') {
+    return selectedRows.value.length
+  }
+  // 单个节点切换时，只能选择1个地区
+  return 1
+}
+
 // 省份选择变化处理
 const handleProvinceChange = async (province) => {
   try {
     // 重置地区选择
-    switchNodeDialog.form.AreaName = ''
+    switchNodeDialog.form.AreaName = []
     switchNodeDialog.areaOptions = []
     
     if (!province || !switchNodeDialog.form.GameName) return
     
-    // 获取该游戏和省份下的地区列表
-    const areaResponse = await getAreaData({ 
-      GameName: switchNodeDialog.form.GameName,
-      ScreenProvince: province
-    })
-    if (areaResponse.Code === 1000) {
-      if (areaResponse.List && areaResponse.List.length > 0) {
-        switchNodeDialog.areaOptions = areaResponse.List
+    if (province === '全国') {
+      // 选择全国时，不传递省份参数，直接获取全国地区列表
+      const areaResponse = await getAreaData({ 
+        GameName: switchNodeDialog.form.GameName
+        // 不传递 ScreenProvince 参数，获取全国地区
+      })
+      if (areaResponse.Code === 1000) {
+        if (areaResponse.List && areaResponse.List.length > 0) {
+          switchNodeDialog.areaOptions = areaResponse.List
+        } else {
+          switchNodeDialog.areaOptions = []
+          ElMessage.warning('全国范围内暂无可用节点')
+        }
       } else {
-        switchNodeDialog.areaOptions = []
-        ElMessage.warning('该省份暂无可用节点')
+        ElMessage.error(areaResponse.Msg || '获取全国地区列表失败')
       }
     } else {
-      ElMessage.error(areaResponse.Msg || '获取地区列表失败')
+      // 获取指定省份下的地区列表
+      const areaResponse = await getAreaData({ 
+        GameName: switchNodeDialog.form.GameName,
+        ScreenProvince: province
+      })
+      if (areaResponse.Code === 1000) {
+        if (areaResponse.List && areaResponse.List.length > 0) {
+          switchNodeDialog.areaOptions = areaResponse.List
+        } else {
+          switchNodeDialog.areaOptions = []
+          ElMessage.warning('该省份暂无可用节点')
+        }
+      } else {
+        ElMessage.error(areaResponse.Msg || '获取地区列表失败')
+      }
     }
   } catch (error) {
     console.error('获取地区列表失败:', error)
@@ -1676,6 +1719,21 @@ const handleConfirmSwitchNode = async () => {
     const isBatchSwitch = switchNodeDialog.currentNode.Game === '批量切换'
     const nodeCount = isBatchSwitch ? selectedRows.value.length : 1
     
+    // 批量切换时，检查地区数量不能大于节点数量
+    if (isBatchSwitch && Array.isArray(switchNodeDialog.form.AreaName)) {
+      const selectedAreaCount = switchNodeDialog.form.AreaName.length
+      if (selectedAreaCount > nodeCount) {
+        ElMessage.error(`批量切换节点时，选择的地区数量（${selectedAreaCount}个）不能大于节点数量（${nodeCount}个）`)
+        switchNodeDialog.loading = false
+        return
+      }
+      if (selectedAreaCount === 0) {
+        ElMessage.error('请至少选择一个地区')
+        switchNodeDialog.loading = false
+        return
+      }
+    }
+    
     // 显示告警提示
     await ElMessageBox.confirm(
       `切换节点后，系统将根据新节点的单价重新计算并调整到期时间，确定要继续切换${isBatchSwitch ? `这${nodeCount}个节点` : ''}吗？`,
@@ -1697,12 +1755,54 @@ const handleConfirmSwitchNode = async () => {
       nodeIds = [switchNodeDialog.currentNode.Id]
     }
     
+    // 准备InfoList，处理多选地区的情况
+    let infoList
+    if (Array.isArray(switchNodeDialog.form.AreaName) && switchNodeDialog.form.AreaName.length > 0) {
+      // 多选地区的情况
+      const selectedAreas = switchNodeDialog.form.AreaName
+      
+      // 如果是批量切换，根据地区数量分配节点
+       if (isBatchSwitch) {
+         const nodesPerArea = Math.floor(nodeIds.length / selectedAreas.length)
+         const remainingNodes = nodeIds.length % selectedAreas.length
+         
+         infoList = selectedAreas.map((areaName, index) => {
+           // 前remainingNodes个地区多分配1个节点
+           const quantity = nodesPerArea + (index < remainingNodes ? 1 : 0)
+           return {
+             area: areaName,
+             quantity: quantity.toString()
+           }
+         })
+       } else {
+        // 单个节点切换时，平均分配到选中的地区
+        const nodesPerArea = Math.ceil(nodeIds.length / selectedAreas.length)
+        
+        infoList = selectedAreas.map((areaName, index) => {
+          // 计算每个地区分配的节点数量
+          const startIndex = index * nodesPerArea
+          const endIndex = Math.min(startIndex + nodesPerArea, nodeIds.length)
+          const quantity = endIndex - startIndex
+          
+          return {
+            area: areaName,
+            quantity: quantity.toString()
+          }
+        })
+      }
+    } else {
+      // 兼容旧版本单选的情况
+      infoList = [{
+        area: switchNodeDialog.form.AreaName,
+        quantity: nodeIds.length.toString()
+      }]
+    }
+    
     // 调用切换节点接口
     const response = await switchNode({
       Id: nodeIds,
-      AreaName: switchNodeDialog.form.AreaName,
       GameName: switchNodeDialog.form.GameName,
-      Province: switchNodeDialog.form.Province
+      InfoList: infoList
     })
     
     if (response.Code === 1000) {
@@ -1899,29 +1999,33 @@ const generateCopyContent = (rows, format) => {
     const startTime = row.StartTime || ''
     const endTime = row.EndTime || ''
     
+    // 组合地址（IP:端口）
+    const address = `${ip}:${port}`
+    
     switch (format) {
+      case 'laoyu':
+        // 老鱼格式：地址/账号/密码/有效期
+        return `${address}/${user}/${pass}/${endTime}`
+      
+      case 'laoyuRegion':
+        // 老鱼带地区格式：地址/账号/密码/地区名/有效期
+        return `${address}/${user}/${pass}/${area}/${endTime}`
+      
       case 'wanan':
-        // 万安格式：ip|端口|账号|密码|到期日期
-        return `${ip}|${port}|${user}|${pass}|${endTime}`
+        // 万安格式：地址|账号|密码|有效期
+        return `${address}|${user}|${pass}|${endTime}`
       
-      case 'slash':
-        // 斜杠格式：ip/端口/账号/密码
-        return `${ip}/${port}/${user}/${pass}`
+      case 'youmi':
+        // 有米格式：地址|账号|密码|有效期
+        return `${address}|${user}|${pass}|${endTime}`
       
-      case 'region':
-        // 地区格式：ip/端口/账号/密码/地区
-        return `${ip}/${port}/${user}/${pass}/${area}`
-      
-      case 'regionDate':
-        // 地区日期格式：ip/端口/账号/密码/地区/购买/到期
-        return `${ip}/${port}/${user}/${pass}/${area}/${startTime}/${endTime}`
-      
-      case 'browser':
-        // 浏览器格式：ip:端口:账号:密码
-        return `${ip}:${port}:${user}:${pass}`
+      case 'youmiRegion':
+        // 有米带地区格式：地址|账号|密码|地区名|有效期
+        return `${address}|${user}|${pass}|${area}|${endTime}`
       
       default:
-        return `${ip}|${port}|${user}|${pass}|${endTime}`
+        // 默认使用老鱼格式
+        return `${address}/${user}/${pass}/${endTime}`
     }
   })
   
@@ -1941,7 +2045,7 @@ const fetchOrderLogData = async () => {
   orderLogDialog.loading = true
   try {
     const params = {
-      soldId: orderLogDialog.currentNode.Id,
+      screenId: orderLogDialog.currentNode.Id,
       page: orderLogDialog.pagination.page,
       pageSize: orderLogDialog.pagination.size
     }
@@ -2463,6 +2567,25 @@ onMounted(() => {
     display: flex;
     justify-content: center;
     margin-top: 16px;
+  }
+}
+
+.area-select-tip {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background-color: #f0f9ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 6px;
+  
+  .el-text {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    
+    &::before {
+      content: "ℹ️";
+      font-size: 14px;
+    }
   }
 }
 </style>

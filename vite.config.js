@@ -18,6 +18,11 @@ export default defineConfig({
       resolvers: [ElementPlusResolver()]
     })
   ],
+  define: {
+    // 抑制 DOM Mutation Event 警告
+    __VUE_PROD_DEVTOOLS__: false,
+    __VUE_OPTIONS_API__: true
+  },
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src')

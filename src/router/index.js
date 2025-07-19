@@ -54,6 +54,7 @@ const routes = [
     children: [
       {
         path: '',
+        name: 'UserIndex',
         redirect: '/user/welcome'
       },
       {
@@ -134,6 +135,16 @@ const routes = [
         component: () => import('@/views/user/business/Expired.vue'),
         meta: {
           title: '过期业务',
+          requiresAuth: true,
+          roles: ['user']
+        }
+      },
+      {
+        path: 'business/order-log',
+        name: 'UserBusinessOrderLog',
+        component: () => import('@/views/user/business/OrderLog.vue'),
+        meta: {
+          title: '订单日志',
           requiresAuth: true,
           roles: ['user']
         }

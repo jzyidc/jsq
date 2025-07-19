@@ -68,9 +68,9 @@
         <el-form-item prop="agree">
           <el-checkbox v-model="registerForm.agree">
             我已阅读并同意
-            <el-link type="primary" :underline="false">《用户协议》</el-link>
-            和
-            <el-link type="primary" :underline="false">《隐私政策》</el-link>
+            <el-link type="primary" underline="never">《用户协议》</el-link>
+                        和
+                        <el-link type="primary" underline="never">《隐私政策》</el-link>
           </el-checkbox>
         </el-form-item>
         

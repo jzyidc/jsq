@@ -157,7 +157,7 @@ export const getGameData = (type = '') => {
   
   // 如果传入了type参数，则添加到请求数据中
   if (type) {
-    data.Type = type
+    data.Initial = type
   }
   
   return request({
@@ -284,11 +284,10 @@ export const getNodeData = (params = {}) => {
 // 切换节点
 export const switchNode = (params) => {
   const data = {
-    Action: 'SwitchNode',
-    Id: params.Id, // JSON数组的节点ID，例如:["111199955","111199956","111199957","111199958"]
-    AreaName: params.AreaName, // 需切换到的地区
+    Action: 'SwitchNode_0718',
+    Id: params.Id, // JSON数组的节点ID，例如:[1000094, 1000095, 1000096]
     GameName: params.GameName, // 需切换到的游戏
-    Province: params.Province // 需切换到的省份
+    InfoList: params.InfoList // 区域信息数组，例如:[{"area": "山西省—太原", "quantity": "1"}]
   }
   
   return request({

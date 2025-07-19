@@ -46,31 +46,31 @@ function useTree(watcherData) {
   });
   const normalize = (data) => {
     const rowKey = watcherData.rowKey.value;
-    const res = {};
+    const res = /* @__PURE__ */ new Map();
     util.walkTreeNode(data, (parent, children, level) => {
-      const parentId = util.getRowIdentity(parent, rowKey);
+      const parentId = util.getRowIdentity(parent, rowKey, true);
       if (shared.isArray(children)) {
-        res[parentId] = {
-          children: children.map((row) => util.getRowIdentity(row, rowKey)),
+        res.set(parentId, {
+          children: children.map((row) => row[rowKey]),
           level
-        };
+        });
       } else if (lazy.value) {
-        res[parentId] = {
+        res.set(parentId, {
           children: [],
           lazy: true,
           level
-        };
+        });
       }
-    }, childrenColumnName.value, lazyColumnIdentifier.value);
+    }, childrenColumnName.value, lazyColumnIdentifier.value, lazy.value);
     return res;
   };
-  const updateTreeData = (ifChangeExpandRowKeys = false, ifExpandAll = ((_a) => (_a = instance.store) == null ? void 0 : _a.states.defaultExpandAll.value)()) => {
-    var _a2;
+  const updateTreeData = (ifChangeExpandRowKeys = false, ifExpandAll) => {
+    var _a, _b;
+    ifExpandAll || (ifExpandAll = (_a = instance.store) == null ? void 0 : _a.states.defaultExpandAll.value);
     const nested = normalizedData.value;
     const normalizedLazyNode_ = normalizedLazyNode.value;
-    const keys = Object.keys(nested);
     const newTreeData = {};
-    if (keys.length) {
+    if (nested instanceof Map && nested.size) {
       const oldTreeData = vue.unref(treeData);
       const rootLazyRowKeys = [];
       const getExpanded = (oldValue, key) => {
@@ -85,9 +85,9 @@ function useTree(watcherData) {
           return !!((oldValue == null ? void 0 : oldValue.expanded) || included);
         }
       };
-      keys.forEach((key) => {
+      nested.forEach((_, key) => {
         const oldValue = oldTreeData[key];
-        const newValue = { ...nested[key] };
+        const newValue = { ...nested.get(key) };
         newValue.expanded = getExpanded(oldValue, key);
         if (newValue.lazy) {
           const { loaded = false, loading = false } = oldValue || {};
@@ -100,10 +100,11 @@ function useTree(watcherData) {
       const lazyKeys = Object.keys(normalizedLazyNode_);
       if (lazy.value && lazyKeys.length && rootLazyRowKeys.length) {
         lazyKeys.forEach((key) => {
+          var _a2;
           const oldValue = oldTreeData[key];
           const lazyNodeChildren = normalizedLazyNode_[key].children;
           if (rootLazyRowKeys.includes(key)) {
-            if (newTreeData[key].children.length !== 0) {
+            if (((_a2 = newTreeData[key].children) == null ? void 0 : _a2.length) !== 0) {
               throw new Error("[ElTable]children must be an empty array.");
             }
             newTreeData[key].children = lazyNodeChildren;
@@ -115,14 +116,14 @@ function useTree(watcherData) {
               loading: !!loading,
               expanded: getExpanded(oldValue, key),
               children: lazyNodeChildren,
-              level: ""
+              level: void 0
             };
           }
         });
       }
     }
     treeData.value = newTreeData;
-    (_a2 = instance.store) == null ? void 0 : _a2.updateTableScrollY();
+    (_b = instance.store) == null ? void 0 : _b.updateTableScrollY();
   };
   vue.watch(() => expandRowKeys.value, () => {
     updateTreeData(true);
