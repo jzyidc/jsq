@@ -365,6 +365,7 @@
                 :max-collapse-tags="3"
                 :disabled="!switchNodeDialog.form.Province"
                 :multiple-limit="getMaxSelectableAreas()"
+                @change="handleAreaSelectionChange"
               >
                 <el-option
                  v-for="area in switchNodeDialog.areaOptions"
@@ -375,8 +376,151 @@
               </el-select>
               <div class="area-select-tip" v-if="switchNodeDialog.currentNode && switchNodeDialog.currentNode.Game === '批量切换'">
                 <el-text size="small" type="info">
-                  可选择 1-{{ getMaxSelectableAreas() }} 个地区，节点将自动分配到选中的地区
+                  可选择 1-{{ getMaxSelectableAreas() }} 个地区，支持自定义每个地区的节点数量
                 </el-text>
+              </div>
+            </el-form-item>
+            
+            <!-- 批量切换时的节点数量分配 -->
+            <el-form-item 
+              v-if="switchNodeDialog.currentNode && switchNodeDialog.currentNode.Game === '批量切换' && switchNodeDialog.form.AreaName.length > 0"
+              label="节点分配"
+            >
+              <div class="node-allocation-section">
+                <div class="allocation-header">
+                  <div class="header-info">
+                    <el-text size="small" type="info">
+                      总共 {{ selectedRows.length }} 个节点，请为每个地区分配节点数量
+                    </el-text>
+                    <el-button 
+                      v-if="switchNodeDialog.form.AreaName.length > 0"
+                      type="primary" 
+                      size="small" 
+                      @click="autoAllocateNodes"
+                    >
+                      <el-icon><MagicStick /></el-icon>
+                      平均分配
+                    </el-button>
+                  </div>
+                  <div class="allocation-summary">
+                    <el-text 
+                      :type="getTotalAllocatedQuantity() === selectedRows.length ? 'success' : 'warning'"
+                      size="small"
+                    >
+                      已分配: {{ getTotalAllocatedQuantity() }} / {{ selectedRows.length }} 个节点
+                      <span v-if="getTotalAllocatedQuantity() !== selectedRows.length" class="allocation-warning">
+                        (请确保分配的节点总数等于选中的节点数量)
+                      </span>
+                    </el-text>
+                  </div>
+                </div>
+                
+                <!-- 优化后的分配列表 -->
+                <div class="allocation-container">
+                  <!-- 当地区数量较少时，使用原有布局 -->
+                  <div 
+                    v-if="switchNodeDialog.form.AreaName.length <= 5"
+                    class="allocation-list"
+                  >
+                    <div 
+                      v-for="(areaName, index) in switchNodeDialog.form.AreaName" 
+                      :key="areaName"
+                      class="allocation-item"
+                    >
+                      <div class="area-label">
+                        <el-icon><Location /></el-icon>
+                        <span>{{ areaName }}</span>
+                      </div>
+                      <el-input-number
+                        v-model="switchNodeDialog.form.areaQuantities[areaName]"
+                        :min="0"
+                        :max="selectedRows.length"
+                        size="small"
+                        style="width: 120px"
+                        @change="validateTotalQuantity"
+                      />
+                      <span class="quantity-label">个节点</span>
+                    </div>
+                  </div>
+                  
+                  <!-- 当地区数量较多时，使用表格布局 -->
+                  <div 
+                    v-else
+                    class="allocation-table-container"
+                  >
+                    <el-table
+                      :data="getAreaTableData()"
+                      size="small"
+                      max-height="300"
+                      style="width: 100%"
+                      class="allocation-table"
+                    >
+                      <el-table-column 
+                        prop="areaName" 
+                        label="地区" 
+                        min-width="150"
+                      >
+                        <template #default="{ row }">
+                          <div class="table-area-label">
+                            <el-icon><Location /></el-icon>
+                            <span>{{ row.areaName }}</span>
+                          </div>
+                        </template>
+                      </el-table-column>
+                      <el-table-column 
+                        prop="quantity" 
+                        label="分配节点数" 
+                        width="150"
+                        align="center"
+                      >
+                        <template #default="{ row }">
+                          <el-input-number
+                            v-model="switchNodeDialog.form.areaQuantities[row.areaName]"
+                            :min="0"
+                            :max="selectedRows.length"
+                            size="small"
+                            style="width: 100px"
+                            @change="validateTotalQuantity"
+                          />
+                        </template>
+                      </el-table-column>
+                      <el-table-column 
+                        label="操作" 
+                        width="100"
+                        align="center"
+                      >
+                        <template #default="{ row }">
+                          <el-button
+                            type="text"
+                            size="small"
+                            @click="setAreaQuantity(row.areaName, Math.floor(selectedRows.length / switchNodeDialog.form.AreaName.length))"
+                          >
+                            平均
+                          </el-button>
+                        </template>
+                      </el-table-column>
+                    </el-table>
+                    
+                    <!-- 批量操作按钮 -->
+                    <div class="batch-allocation-actions">
+                      <el-button
+                        size="small"
+                        @click="clearAllAllocations"
+                      >
+                        <el-icon><Delete /></el-icon>
+                        清空分配
+                      </el-button>
+                      <el-button
+                        type="primary"
+                        size="small"
+                        @click="setAllAreasEqual"
+                      >
+                        <el-icon><Grid /></el-icon>
+                        全部平均
+                      </el-button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </el-form-item>
           </div>
@@ -879,7 +1023,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { 
   Plus, Search, Refresh, Switch, Monitor, VideoPlay, Location, Connection, 
   ArrowDown, Aim, Close, Check, CreditCard, Clock, Timer, Calendar, Setting, Key,
-  CopyDocument, List, Document, Download, Money
+  CopyDocument, List, Document, Download, Money, MagicStick, Delete, Grid
 } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import { getNodeData, setGroup, getGameData, getAreaData, switchNode, renewNode, setNodePassword, getNodeRenewPrice } from '@/api/auth'
@@ -962,7 +1106,8 @@ const switchNodeDialog = reactive({
   form: {
     GameName: '',
     Province: '',
-    AreaName: [] // 修改为数组支持多选
+    AreaName: [], // 修改为数组支持多选
+    areaQuantities: {} // 新增：存储每个地区的节点数量
   },
   gameOptions: [],
   provinceOptions: [],
@@ -1100,6 +1245,7 @@ const handleSwitchNode = async (row) => {
     switchNodeDialog.form.GameName = ''
     switchNodeDialog.form.Province = ''
     switchNodeDialog.form.AreaName = []
+    switchNodeDialog.form.areaQuantities = {} // 重置地区节点数量配置
     switchNodeDialog.provinceOptions = []
     switchNodeDialog.areaOptions = []
     
@@ -1626,11 +1772,101 @@ const getMaxSelectableAreas = () => {
   return 1
 }
 
+// 处理地区选择变化
+const handleAreaSelectionChange = (selectedAreas) => {
+  // 如果不是批量切换，直接返回
+  if (!switchNodeDialog.currentNode || switchNodeDialog.currentNode.Game !== '批量切换') {
+    return
+  }
+  
+  // 更新地区数量配置
+  const newQuantities = {}
+  selectedAreas.forEach(areaName => {
+    // 保留已有的配置，新增的地区设为0
+    newQuantities[areaName] = switchNodeDialog.form.areaQuantities[areaName] || 0
+  })
+  switchNodeDialog.form.areaQuantities = newQuantities
+  
+  // 如果只选择了一个地区，自动分配所有节点
+  if (selectedAreas.length === 1) {
+    newQuantities[selectedAreas[0]] = selectedRows.value.length
+  } else if (selectedAreas.length > 1) {
+    // 多个地区时，自动平均分配
+    autoAllocateNodes()
+  }
+}
+
+// 获取已分配的节点总数
+const getTotalAllocatedQuantity = () => {
+  return Object.values(switchNodeDialog.form.areaQuantities).reduce((sum, quantity) => {
+    return sum + (Number(quantity) || 0)
+  }, 0)
+}
+
+// 验证节点总数
+const validateTotalQuantity = () => {
+  const totalAllocated = getTotalAllocatedQuantity()
+  const totalNodes = selectedRows.value.length
+  
+  if (totalAllocated > totalNodes) {
+    ElMessage.warning(`分配的节点总数（${totalAllocated}）不能超过选中的节点数量（${totalNodes}）`)
+  }
+}
+
+// 自动平均分配节点
+const autoAllocateNodes = () => {
+  const selectedAreas = switchNodeDialog.form.AreaName
+  const totalNodes = selectedRows.value.length
+  
+  if (selectedAreas.length === 0) return
+  
+  const nodesPerArea = Math.floor(totalNodes / selectedAreas.length)
+  const remainingNodes = totalNodes % selectedAreas.length
+  
+  selectedAreas.forEach((areaName, index) => {
+    // 前remainingNodes个地区多分配1个节点
+    const quantity = nodesPerArea + (index < remainingNodes ? 1 : 0)
+    switchNodeDialog.form.areaQuantities[areaName] = quantity
+  })
+}
+
+// 获取地区表格数据（用于表格显示）
+const getAreaTableData = () => {
+  return switchNodeDialog.form.AreaName.map(areaName => ({
+    areaName,
+    quantity: switchNodeDialog.form.areaQuantities[areaName] || 0
+  }))
+}
+
+// 设置指定地区的节点数量
+const setAreaQuantity = (areaName, quantity) => {
+  switchNodeDialog.form.areaQuantities[areaName] = quantity
+  validateTotalQuantity()
+}
+
+// 清空所有分配
+const clearAllAllocations = () => {
+  const newQuantities = {}
+  switchNodeDialog.form.AreaName.forEach(areaName => {
+    newQuantities[areaName] = 0
+  })
+  switchNodeDialog.form.areaQuantities = newQuantities
+}
+
+// 全部地区平均分配
+const setAllAreasEqual = () => {
+  autoAllocateNodes()
+}
+
 // 省份选择变化处理
 const handleProvinceChange = async (province) => {
   try {
-    // 重置地区选择
-    switchNodeDialog.form.AreaName = []
+    // 批量切换节点时，不清空已选择的地区
+    const isBatchSwitch = switchNodeDialog.currentNode && switchNodeDialog.currentNode.Game === '批量切换'
+    if (!isBatchSwitch) {
+      // 只有在非批量切换时才重置地区选择
+      switchNodeDialog.form.AreaName = []
+    }
     switchNodeDialog.areaOptions = []
     
     if (!province || !switchNodeDialog.form.GameName) return
@@ -1719,16 +1955,27 @@ const handleConfirmSwitchNode = async () => {
     const isBatchSwitch = switchNodeDialog.currentNode.Game === '批量切换'
     const nodeCount = isBatchSwitch ? selectedRows.value.length : 1
     
-    // 批量切换时，检查地区数量不能大于节点数量
+    // 批量切换时的验证
     if (isBatchSwitch && Array.isArray(switchNodeDialog.form.AreaName)) {
       const selectedAreaCount = switchNodeDialog.form.AreaName.length
-      if (selectedAreaCount > nodeCount) {
-        ElMessage.error(`批量切换节点时，选择的地区数量（${selectedAreaCount}个）不能大于节点数量（${nodeCount}个）`)
+      if (selectedAreaCount === 0) {
+        ElMessage.error('请至少选择一个地区')
         switchNodeDialog.loading = false
         return
       }
-      if (selectedAreaCount === 0) {
-        ElMessage.error('请至少选择一个地区')
+      
+      // 验证节点分配总数
+      const totalAllocated = getTotalAllocatedQuantity()
+      if (totalAllocated !== nodeCount) {
+        ElMessage.error(`节点分配不正确：已分配${totalAllocated}个节点，但选中了${nodeCount}个节点，请确保分配的节点总数等于选中的节点数量`)
+        switchNodeDialog.loading = false
+        return
+      }
+      
+      // 验证每个地区的分配数量不能为0
+      const hasZeroAllocation = Object.values(switchNodeDialog.form.areaQuantities).some(quantity => Number(quantity) === 0)
+      if (hasZeroAllocation) {
+        ElMessage.error('每个选中的地区至少需要分配1个节点')
         switchNodeDialog.loading = false
         return
       }
@@ -1761,14 +2008,10 @@ const handleConfirmSwitchNode = async () => {
       // 多选地区的情况
       const selectedAreas = switchNodeDialog.form.AreaName
       
-      // 如果是批量切换，根据地区数量分配节点
+      // 如果是批量切换，使用自定义的地区节点数量分配
        if (isBatchSwitch) {
-         const nodesPerArea = Math.floor(nodeIds.length / selectedAreas.length)
-         const remainingNodes = nodeIds.length % selectedAreas.length
-         
-         infoList = selectedAreas.map((areaName, index) => {
-           // 前remainingNodes个地区多分配1个节点
-           const quantity = nodesPerArea + (index < remainingNodes ? 1 : 0)
+         infoList = selectedAreas.map(areaName => {
+           const quantity = Number(switchNodeDialog.form.areaQuantities[areaName]) || 0
            return {
              area: areaName,
              quantity: quantity.toString()
@@ -2151,6 +2394,8 @@ onMounted(() => {
 :deep(.switch-node-dialog),
 :deep(.renew-dialog),
 :deep(.order-log-dialog) {
+  max-height: 80vh;
+  
   .el-dialog__header {
     padding: 20px 24px 0;
     border-bottom: none;
@@ -2158,6 +2403,8 @@ onMounted(() => {
   
   .el-dialog__body {
     padding: 20px 24px;
+    max-height: calc(80vh - 140px);
+    overflow-y: auto;
   }
   
   .el-dialog__footer {
@@ -2586,6 +2833,180 @@ onMounted(() => {
       content: "ℹ️";
       font-size: 14px;
     }
+  }
+}
+
+/* 节点分配区域样式 */
+.node-allocation-section {
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  padding: 16px;
+  border-left: 4px solid #67c23a;
+  margin-top: 16px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.allocation-header {
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e4e7ed;
+}
+
+.header-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.allocation-summary {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.allocation-container {
+  margin-top: 16px;
+}
+
+.allocation-list {
+  margin-bottom: 16px;
+}
+
+.allocation-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 12px;
+  background-color: #fff;
+  border-radius: 4px;
+  border: 1px solid #e4e7ed;
+  transition: all 0.3s ease;
+}
+
+.allocation-item:hover {
+  border-color: #67c23a;
+  box-shadow: 0 2px 8px rgba(103, 194, 58, 0.1);
+}
+
+.allocation-item:last-child {
+  margin-bottom: 0;
+}
+
+.area-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 120px;
+  font-weight: 500;
+  color: #303133;
+}
+
+.area-label .el-icon {
+  color: #67c23a;
+  font-size: 14px;
+}
+
+.table-area-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+  color: #303133;
+}
+
+.table-area-label .el-icon {
+  color: #67c23a;
+  font-size: 14px;
+}
+
+.quantity-label {
+  color: #606266;
+  font-size: 13px;
+}
+
+.allocation-warning {
+  color: #e6a23c;
+  font-weight: 500;
+}
+
+/* 表格布局样式 */
+.allocation-table-container {
+  background-color: #fff;
+  border-radius: 6px;
+  border: 1px solid #e4e7ed;
+  overflow: hidden;
+  max-height: 300px;
+}
+
+.allocation-table {
+  :deep(.el-table__header) {
+    background-color: #f5f7fa;
+    
+    th {
+      background-color: #f5f7fa !important;
+      color: #606266;
+      font-weight: 600;
+      border-bottom: 1px solid #e4e7ed;
+    }
+  }
+  
+  :deep(.el-table__body) {
+    tr {
+      &:hover {
+        background-color: #f0f9ff;
+      }
+    }
+    
+    td {
+      border-bottom: 1px solid #f0f0f0;
+      padding: 8px 0;
+    }
+  }
+  
+  :deep(.el-table__row) {
+    transition: background-color 0.3s ease;
+  }
+}
+
+/* 批量操作按钮 */
+.batch-allocation-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 16px;
+  background-color: #f8f9fa;
+  border-top: 1px solid #e4e7ed;
+}
+
+.batch-allocation-actions .el-button {
+  border-radius: 4px;
+  font-size: 12px;
+  padding: 6px 12px;
+  
+  .el-icon {
+    margin-right: 4px;
+  }
+}
+
+/* 响应式设计 - 节点分配区域 */
+@media (max-width: 768px) {
+  .allocation-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .area-label {
+    min-width: auto;
+  }
+  
+  .allocation-summary {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
   }
 }
 </style>
